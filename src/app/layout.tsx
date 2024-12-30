@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import {ThemeProvider} from "next-themes";
+import {Toaster} from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "SPCAM",
@@ -24,6 +25,7 @@ export default function RootLayout({
               disableTransitionOnChange
           >
               {children}
+              <Toaster />
           </ThemeProvider>
           </body>
           </html>

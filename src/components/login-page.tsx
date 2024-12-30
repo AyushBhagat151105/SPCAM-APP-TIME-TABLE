@@ -1,9 +1,7 @@
 import Image from "next/image"
-import Link from "next/link"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import {FiUser} from "react-icons/fi";
-import {BsFillPassFill} from "react-icons/bs";
+import {Button} from "@/components/ui/button";
+import Link from "next/link";
+import {authClient} from "@/lib/auth-client";
 
 export default function LoginPage() {
   return (
@@ -38,44 +36,23 @@ export default function LoginPage() {
                 priority
             />
           </div>
-            <h2 className="text-3xl font-semibold text-white mb-12 text-center lg:text-left">
-              Login
-            </h2>
-            <form className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm text-gray-300 flex" htmlFor="email">
-                  <FiUser /> <span className="px-2">Email</span>
-                </label>
-                <Input
-                    id="email"
-                    placeholder="username@gmail.com"
-                    type="email"
-                    className="w-full h-12 bg-white/10 border-0 text-white placeholder:text-gray-400 focus-visible:ring-1 focus-visible:ring-white/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm text-gray-300 flex" htmlFor="password">
-                  <BsFillPassFill /> <span className="px-2">Password</span>
-                </label>
-                <Input
-                    id="password"
-                    placeholder="Password"
-                    type="password"
-                    className="w-full h-12 bg-white/10 border-0 text-white placeholder:text-gray-400 focus-visible:ring-1 focus-visible:ring-white/20"
-                />
-              </div>
-              <div className="flex justify-between items-center">
-                <Link
-                    href="#"
-                    className="text-sm text-gray-300 hover:text-white inline-block"
-                >
-                  Forgot Password?
-                </Link>
-              </div>
-              <Button className="w-full h-12 text-base bg-[#4461F2] hover:bg-[#3451E2]">
-                Login
-              </Button>
-            </form>
+          <div className="flex space-x-4 items-center justify-center">
+            <Button><Link href="/sign-up">Sign-up</Link></Button>
+            <Button><Link href="/sign-in">Sign-in</Link></Button>
+            {/*<Button onClick={async () => {*/}
+            {/*  "use server"*/}
+            {/*  const newUser = await authClient.admin.createUser({*/}
+            {/*    name: "Test User",*/}
+            {/*    email: "test@example.com",*/}
+            {/*    password: "password123",*/}
+            {/*    role: "admin",*/}
+            {/*    data: {*/}
+            {/*      // any additional on the user table including plugin fields and custom fields*/}
+            {/*      customField: "customValue"*/}
+            {/*    }*/}
+            {/*  });*/}
+            {/*}}>create admin</Button>*/}
+          </div>
           </div>
         </div>
 
