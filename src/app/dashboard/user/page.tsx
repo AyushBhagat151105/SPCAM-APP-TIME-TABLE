@@ -18,7 +18,7 @@ const UserPage
     const user = await session?.user;
     return (
         <div>
-            <Navbar />
+            {/*<Navbar />*/}
             <ul>
                 <li>{user?.role}</li>
                 <li>{user?.name}</li>
