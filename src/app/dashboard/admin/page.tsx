@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Timetable from "@/components/Tiemtable";
+import DashboardCards from "@/components/DashboardCards";
 
 const AdminPage = async () => {
   // Fetch session details
@@ -46,6 +47,11 @@ const AdminPage = async () => {
               <strong>Email:</strong> {user.email}
             </li>
           </ul>
+        </div>
+
+        <div className="m-5">
+          {/* Dashboard Cards */}
+          <DashboardCards />
         </div>
 
         {/* Timetable Section */}

@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// This is your Prisma schema file
 
 generator client {
   provider = "prisma-client-js"
@@ -19,7 +15,7 @@ model Subject {
   subjectcode String      @unique
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  Timetable   Timetable[]
+  Timetable   Timetable[] // One subject can appear in many timetables
 }
 
 model Class {
@@ -28,17 +24,38 @@ model Class {
   classroom String      @unique
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
-  Timetable Timetable[]
+  Timetable Timetable[] // One class can have many timetables
 }
 
 model Teacher {
   id          String      @id @default(cuid())
   teachername String
-  password    String
   teachercode String      @unique
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  Timetable   Timetable[]
+  Timetable   Timetable[] // One teacher can have many timetables
+  User        User?
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  role          String? // Can be 'admin' or 'teacher'
+  banned        Boolean?
+  banReason     String?
+  banExpires    DateTime?
+  teacherCode   String?   @unique // Linking User to Teacher by teacherCode
+  teacher       Teacher?  @relation(fields: [teacherCode], references: [teachercode]) // Linking user and teacher via teacherCode
+  sessions      Session[]
+  accounts      Account[]
+
+  @@unique([email])
+  @@map("user")
 }
 
 model Timetable {
@@ -55,25 +72,6 @@ model Timetable {
   endtime   DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean
-  image         String?
-  createdAt     DateTime
-  updatedAt     DateTime
-  role          String?
-  banned        Boolean?
-  banReason     String?
-  banExpires    DateTime?
-  sessions      Session[]
-  accounts      Account[]
-
-  @@unique([email])
-  @@map("user")
 }
 
 model Session {

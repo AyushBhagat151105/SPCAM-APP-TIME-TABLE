@@ -24,31 +24,31 @@ const menuItems = [
       {
         icon: MdOutlineSchool,
         label: "Teachers",
-        href: "./list/teachers",
+        href: "/dashboard/list/teachers", // Absolute path
         visible: ["admin"],
       },
       {
         icon: MdSubject,
         label: "Subjects",
-        href: "./list/subjects",
+        href: "/dashboard/list/subjects", // Absolute path
         visible: ["admin"],
       },
       {
         icon: MdClass,
         label: "Classes",
-        href: "./list/class",
+        href: "/dashboard/list/class", // Absolute path
         visible: ["admin"],
       },
       {
         icon: BsTable,
         label: "Time-Table",
-        href: "./list/time-table",
+        href: "/dashboard/list/time-table", // Absolute path
         visible: ["admin", "user"],
       },
       {
         icon: MdOutlineAnnouncement,
         label: "Announcements",
-        href: "./list/announcements",
+        href: "/dashboard/list/announcements", // Absolute path
         visible: ["admin", "user"],
       },
     ],
