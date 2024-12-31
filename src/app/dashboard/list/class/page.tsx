@@ -1,7 +1,12 @@
 import React from "react";
+import ClassManagement from "@/components/ClassManagement";
 
 const classPage = () => {
-  return <div>Class Page</div>;
+  return (
+    <div>
+      <ClassManagement />
+    </div>
+  );
 };
 
 export default classPage;
