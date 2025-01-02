@@ -1,34 +1,34 @@
-import prisma from "@/lib/prisma";
+// src/app/api/classes/route.ts
 import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
-// Handle GET requests to fetch all classes
-export async function GET() {
+export async function POST(request: Request) {
   try {
-    const classes = await prisma.class.findMany();
-    return NextResponse.json({ classes });
+    const { classname, classroom } = await request.json();
+    const newClass = await prisma.class.create({
+      data: {
+        classname,
+        classroom,
+      },
+    });
+    return NextResponse.json(newClass, { status: 201 });
   } catch (error) {
+    console.error("Error creating class:", error);
     return NextResponse.json(
-      { error: "Failed to fetch classes" },
+      { error: "Failed to create class" },
       { status: 500 },
     );
   }
 }
 
-// Handle POST requests to create a new class
-export async function POST(request: Request) {
-  const { classname, classcode } = await request.json();
-
+export async function GET() {
   try {
-    const newClass = await prisma.class.create({
-      data: {
-        classname,
-        classcode,
-      },
-    });
-    return NextResponse.json(newClass, { status: 201 });
+    const classes = await prisma.class.findMany();
+    return NextResponse.json({ classes }, { status: 200 });
   } catch (error) {
+    console.error("Error fetching classes:", error);
     return NextResponse.json(
-      { error: "Failed to create class" },
+      { error: "Failed to fetch classes" },
       { status: 500 },
     );
   }

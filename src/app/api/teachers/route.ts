@@ -1,12 +1,14 @@
-// src/app/api/teachers/route.ts
-
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { NextResponse } from "next/server";
 
-// Handle GET requests to fetch all teachers
 export async function GET() {
   try {
-    const teachers = await prisma.teacher.findMany();
+    const teachers = await prisma.teacher.findMany({
+      include: {
+        streams: true,
+        user: true,
+      },
+    });
     return NextResponse.json({ teachers });
   } catch (error) {
     return NextResponse.json(
@@ -16,15 +18,17 @@ export async function GET() {
   }
 }
 
-// Handle POST requests to create a new teacher
-export async function POST(request: Request) {
-  const { teachername, teachercode } = await request.json();
-
+export async function POST(req: NextRequest) {
   try {
+    const { teachername, teachercode, userId, streamIds } = await req.json();
     const newTeacher = await prisma.teacher.create({
       data: {
         teachername,
         teachercode,
+        userId,
+        streams: {
+          connect: streamIds.map((streamId: string) => ({ id: streamId })),
+        },
       },
     });
     return NextResponse.json(newTeacher, { status: 201 });

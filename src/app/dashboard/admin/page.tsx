@@ -2,7 +2,6 @@ import React from "react";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import Timetable from "@/components/Tiemtable";
 import DashboardCards from "@/components/DashboardCards";
 
 const AdminPage = async () => {
@@ -57,9 +56,9 @@ const AdminPage = async () => {
         {/* Timetable Section */}
         <div className="bg-[#252b3c] p-6 rounded-lg shadow-lg">
           <h3 className="text-lg font-semibold text-orange-500 mb-4">
-            Manage Timetable
+            Timetable
           </h3>
-          <Timetable />
+          {/*<Timetable />*/}
         </div>
       </div>
     </div>

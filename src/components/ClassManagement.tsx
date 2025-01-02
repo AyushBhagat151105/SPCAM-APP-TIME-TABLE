@@ -1,3 +1,4 @@
+// src/components/ClassManagement.tsx
 "use client";
 import { useState, useEffect } from "react";
 
@@ -5,13 +6,13 @@ const ClassManagement = () => {
   type Class = {
     id: string;
     classname: string;
-    classcode: string;
+    classroom: string;
   };
   const [classes, setClasses] = useState<Class[]>([]);
   const [editClass, setEditClass] = useState<Class | null>(null);
   const [classData, setClassData] = useState({
     classname: "",
-    classcode: "",
+    classroom: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<any>({});
@@ -19,7 +20,7 @@ const ClassManagement = () => {
   // Fetch classes from the backend
   const fetchClasses = async () => {
     try {
-      const res = await fetch("/api/classes");
+      const res = await fetch("/api/classes", { method: "GET" });
       if (!res.ok) {
         throw new Error("Failed to fetch classes");
       }
@@ -45,10 +46,10 @@ const ClassManagement = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!classData.classname || !classData.classcode) {
+    if (!classData.classname || !classData.classroom) {
       setErrors({
         classname: !classData.classname ? "Class name is required" : "",
-        classcode: !classData.classcode ? "Class code is required" : "",
+        classroom: !classData.classroom ? "Classroom is required" : "",
       });
       setIsSubmitting(false);
       return;
@@ -73,7 +74,7 @@ const ClassManagement = () => {
 
       alert(`Class ${editClass ? "updated" : "added"} successfully`);
       setEditClass(null);
-      setClassData({ classname: "", classcode: "" });
+      setClassData({ classname: "", classroom: "" });
       fetchClasses();
     } catch (error) {
       if (error instanceof Error) {
@@ -88,25 +89,25 @@ const ClassManagement = () => {
 
   // Handle the delete functionality
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this class?")) {
-      try {
-        const response = await fetch(`/api/classes/${id}`, {
-          method: "DELETE",
-        });
+    if (!confirm("Are you sure you want to delete this class?")) return;
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to delete class");
-        }
+    try {
+      const response = await fetch(`/api/classes/${id}`, {
+        method: "DELETE",
+      });
 
-        alert("Class deleted successfully");
-        fetchClasses();
-      } catch (error) {
-        if (error instanceof Error) {
-          alert(`Error: ${error.message}`);
-        } else {
-          alert("Unknown error occurred");
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete class");
+      }
+
+      alert("Class deleted successfully.");
+      fetchClasses();
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(`Error: ${error.message}`);
+      } else {
+        alert("Unknown error occurred");
       }
     }
   };
@@ -116,7 +117,7 @@ const ClassManagement = () => {
     setEditClass(classItem);
     setClassData({
       classname: classItem.classname,
-      classcode: classItem.classcode,
+      classroom: classItem.classroom,
     });
   };
 
@@ -146,17 +147,17 @@ const ClassManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Class Code</label>
+            <label className="block text-sm font-medium mb-2">Classroom</label>
             <input
               type="text"
-              value={classData.classcode}
+              value={classData.classroom}
               onChange={(e) =>
-                setClassData({ ...classData, classcode: e.target.value })
+                setClassData({ ...classData, classroom: e.target.value })
               }
               className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            {errors.classcode && (
-              <p className="text-sm text-red-400 mt-1">{errors.classcode}</p>
+            {errors.classroom && (
+              <p className="text-sm text-red-400 mt-1">{errors.classroom}</p>
             )}
           </div>
 
@@ -184,7 +185,7 @@ const ClassManagement = () => {
                 Class Name
               </th>
               <th className="px-4 py-2 text-left border-b text-lg">
-                Class Code
+                Classroom
               </th>
               <th className="px-4 py-2 text-left border-b text-lg">Actions</th>
             </tr>
@@ -193,7 +194,7 @@ const ClassManagement = () => {
             {classes.map((classItem) => (
               <tr key={classItem.id} className="border-b">
                 <td className="px-4 py-2">{classItem.classname}</td>
-                <td className="px-4 py-2">{classItem.classcode}</td>
+                <td className="px-4 py-2">{classItem.classroom}</td>
                 <td className="px-4 py-2">
                   <button
                     onClick={() => handleEdit(classItem)}

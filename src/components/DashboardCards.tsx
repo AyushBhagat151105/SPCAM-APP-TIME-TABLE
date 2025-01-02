@@ -12,10 +12,14 @@ const DashboardCards = () => {
   const fetchCounts = async () => {
     try {
       const [teachersRes, classesRes, usersRes] = await Promise.all([
-        fetch("/api/teachers/count"),
-        fetch("/api/classes/count"),
-        fetch("/api/user/count"),
+        fetch("/api/teachers/count", { method: "GET" }),
+        fetch("/api/classes/count", { method: "GET" }),
+        fetch("/api/user/count", { method: "GET" }),
       ]);
+
+      if (!teachersRes.ok || !classesRes.ok || !usersRes.ok) {
+        throw new Error("Failed to fetch counts");
+      }
 
       const teachersCount = await teachersRes.json();
       const classesCount = await classesRes.json();

@@ -10,6 +10,7 @@ import {
   MdOutlineAnnouncement,
 } from "react-icons/md";
 import { BsTable } from "react-icons/bs";
+import { FaStream } from "react-icons/fa";
 
 const menuItems = [
   {
@@ -25,6 +26,12 @@ const menuItems = [
         icon: MdOutlineSchool,
         label: "Teachers",
         href: "/dashboard/list/teachers", // Absolute path
+        visible: ["admin"],
+      },
+      {
+        icon: FaStream, // Update the icon here
+        label: "Stream",
+        href: "/dashboard/list/stream", // Absolute path
         visible: ["admin"],
       },
       {
@@ -65,13 +72,12 @@ const menuItems = [
       {
         icon: AiOutlineSetting,
         label: "Settings",
-        href: "/settings",
-        visible: ["admin", "user"],
+        href: "/dashboard/list/settings",
+        visible: ["admin"],
       },
     ],
   },
 ];
-
 const Menu = async () => {
   const session = await auth.api.getSession({
     headers: await headers(),

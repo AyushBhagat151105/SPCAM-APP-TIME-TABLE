@@ -1,9 +1,7 @@
 // src/app/api/subjects/route.ts
-
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { NextResponse } from "next/server";
 
-// Handle GET requests to fetch all subjects
 export async function GET() {
   try {
     const subjects = await prisma.subject.findMany();
@@ -16,16 +14,11 @@ export async function GET() {
   }
 }
 
-// Handle POST requests to create a new subject
-export async function POST(request: Request) {
-  const { subjectname, subjectcode } = await request.json();
-
+export async function POST(req: NextRequest) {
   try {
+    const { subjectname, subjectcode } = await req.json();
     const newSubject = await prisma.subject.create({
-      data: {
-        subjectname,
-        subjectcode,
-      },
+      data: { subjectname, subjectcode },
     });
     return NextResponse.json(newSubject, { status: 201 });
   } catch (error) {

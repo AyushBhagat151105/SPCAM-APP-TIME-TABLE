@@ -1,3 +1,5 @@
+// src/components/TeacherManagement.tsx
+
 "use client";
 import { useState, useEffect } from "react";
 
@@ -5,19 +7,34 @@ type Teacher = {
   id: string;
   teachername: string;
   teachercode: string;
+  userId?: string;
+  streams?: Stream[];
+};
+
+type User = {
+  id: string;
+  name: string;
+};
+
+type Stream = {
+  id: string;
+  streamName: string;
 };
 
 const TeacherManagement = () => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [streams, setStreams] = useState<Stream[]>([]);
   const [editTeacher, setEditTeacher] = useState<Teacher | null>(null);
   const [teacherData, setTeacherData] = useState({
     teachername: "",
     teachercode: "",
+    userId: "",
+    streamIds: [] as string[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Fetch teachers from the backend
   const fetchTeachers = async () => {
     try {
       const res = await fetch("/api/teachers");
@@ -30,18 +47,48 @@ const TeacherManagement = () => {
       if (error instanceof Error) {
         console.error("Error fetching teachers:", error);
         alert(`Error fetching teachers: ${error.message}`);
-      } else {
-        console.error("Unknown error fetching teachers");
-        alert("Unknown error fetching teachers");
+      }
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch("/api/user");
+      if (!res.ok) {
+        throw new Error("Failed to fetch users");
+      }
+      const data = await res.json();
+      setUsers(data.users);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error fetching users:", error);
+        alert(`Error fetching users: ${error.message}`);
+      }
+    }
+  };
+
+  const fetchStreams = async () => {
+    try {
+      const res = await fetch("/api/streams");
+      if (!res.ok) {
+        throw new Error("Failed to fetch streams");
+      }
+      const data = await res.json();
+      setStreams(data.streams);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error fetching streams:", error);
+        alert(`Error fetching streams: ${error.message}`);
       }
     }
   };
 
   useEffect(() => {
     fetchTeachers();
+    fetchUsers();
+    fetchStreams();
   }, []);
 
-  // Handle form submission for adding/updating a teacher
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -76,7 +123,46 @@ const TeacherManagement = () => {
 
       alert(`Teacher ${editTeacher ? "updated" : "added"} successfully`);
       setEditTeacher(null);
-      setTeacherData({ teachername: "", teachercode: "" });
+      setTeacherData({
+        teachername: "",
+        teachercode: "",
+        userId: "",
+        streamIds: [],
+      });
+      fetchTeachers();
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(`Error: ${error.message}`);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = (teacher: Teacher) => {
+    setEditTeacher(teacher);
+    setTeacherData({
+      teachername: teacher.teachername,
+      teachercode: teacher.teachercode,
+      userId: teacher.userId || "",
+      streamIds: teacher.streams?.map((stream) => stream.id) || [],
+    });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this teacher?")) return;
+
+    try {
+      const response = await fetch(`/api/teachers/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete teacher");
+      }
+
+      alert("Teacher deleted successfully.");
       fetchTeachers();
     } catch (error) {
       if (error instanceof Error) {
@@ -84,43 +170,7 @@ const TeacherManagement = () => {
       } else {
         alert("Unknown error occurred");
       }
-    } finally {
-      setIsSubmitting(false);
     }
-  };
-
-  // Handle the delete functionality
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this teacher?")) {
-      try {
-        const response = await fetch(`/api/teachers/${id}`, {
-          method: "DELETE",
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to delete teacher");
-        }
-
-        alert("Teacher deleted successfully");
-        fetchTeachers();
-      } catch (error) {
-        if (error instanceof Error) {
-          alert(`Error: ${error.message}`);
-        } else {
-          alert("Unknown error occurred");
-        }
-      }
-    }
-  };
-
-  // Handle edit action
-  const handleEdit = (teacher: Teacher) => {
-    setEditTeacher(teacher);
-    setTeacherData({
-      teachername: teacher.teachername,
-      teachercode: teacher.teachercode,
-    });
   };
 
   return (
@@ -129,7 +179,6 @@ const TeacherManagement = () => {
         Teacher Management
       </h1>
 
-      {/* Add/Edit Teacher Form */}
       <div className="bg-gray-800 p-6 rounded-lg mb-8 max-w-lg mx-auto">
         <h2 className="text-2xl mb-4">
           {editTeacher ? "Edit Teacher" : "Add New Teacher"}
@@ -169,6 +218,55 @@ const TeacherManagement = () => {
             )}
           </div>
 
+          <div>
+            <label className="block text-sm font-medium mb-2">User</label>
+            <select
+              value={teacherData.userId}
+              onChange={(e) =>
+                setTeacherData({ ...teacherData, userId: e.target.value })
+              }
+              className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="">Select User</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Streams</label>
+            {streams.map((stream) => (
+              <div key={stream.id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`stream-${stream.id}`}
+                  value={stream.id}
+                  checked={teacherData.streamIds.includes(stream.id)}
+                  onChange={(e) => {
+                    const selectedStreamIds = teacherData.streamIds.includes(
+                      e.target.value,
+                    )
+                      ? teacherData.streamIds.filter(
+                          (id) => id !== e.target.value,
+                        )
+                      : [...teacherData.streamIds, e.target.value];
+                    setTeacherData({
+                      ...teacherData,
+                      streamIds: selectedStreamIds,
+                    });
+                  }}
+                  className="mr-2"
+                />
+                <label htmlFor={`stream-${stream.id}`}>
+                  {stream.streamName}
+                </label>
+              </div>
+            ))}
+          </div>
+
           <button
             type="submit"
             disabled={isSubmitting}
@@ -183,7 +281,6 @@ const TeacherManagement = () => {
         </form>
       </div>
 
-      {/* Teacher List */}
       <div className="overflow-x-auto bg-gray-800 p-6 rounded-lg">
         <h2 className="text-2xl font-semibold mb-4">Teacher List</h2>
         <table className="w-full table-auto border-collapse">
@@ -195,6 +292,8 @@ const TeacherManagement = () => {
               <th className="px-4 py-2 text-left border-b text-lg">
                 Teacher Code
               </th>
+              <th className="px-4 py-2 text-left border-b text-lg">User</th>
+              <th className="px-4 py-2 text-left border-b text-lg">Streams</th>
               <th className="px-4 py-2 text-left border-b text-lg">Actions</th>
             </tr>
           </thead>
@@ -203,6 +302,14 @@ const TeacherManagement = () => {
               <tr key={teacher.id} className="border-b">
                 <td className="px-4 py-2">{teacher.teachername}</td>
                 <td className="px-4 py-2">{teacher.teachercode}</td>
+                <td className="px-4 py-2">
+                  {users.find((user) => user.id === teacher.userId)?.name || ""}
+                </td>
+                <td className="px-4 py-2">
+                  {teacher.streams
+                    ?.map((stream) => stream.streamName)
+                    .join(", ")}
+                </td>
                 <td className="px-4 py-2">
                   <button
                     onClick={() => handleEdit(teacher)}

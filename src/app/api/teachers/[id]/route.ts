@@ -1,20 +1,26 @@
 // src/app/api/teachers/[id]/route.ts
-
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// Handle PUT requests to update a teacher
 export async function PUT(
-  request: Request,
+  req: NextRequest,
   { params }: { params: { id: string } },
 ) {
-  const { id } = params;
-  const { teachername, teachercode } = await request.json();
-
   try {
+    const { teachername, teachercode, userId, streamIds } = await req.json();
     const updatedTeacher = await prisma.teacher.update({
-      where: { id },
-      data: { teachername, teachercode },
+      where: { id: params.id },
+      data: {
+        teachername,
+        teachercode,
+        userId,
+        streams: {
+          set: streamIds.map((streamId: string) => ({ id: streamId })),
+        },
+      },
+      include: {
+        streams: true,
+      },
     });
     return NextResponse.json(updatedTeacher);
   } catch (error) {
@@ -25,27 +31,16 @@ export async function PUT(
   }
 }
 
-// Handle DELETE requests to delete a teacher
-export async function DELETE(request: Request) {
-  const url = new URL(request.url);
-  const id = url.pathname.split("/").pop();
-
-  if (!id) {
-    return NextResponse.json(
-      { error: "Teacher ID is required" },
-      { status: 400 },
-    );
-  }
-
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } },
+) {
   try {
-    await prisma.teacher.delete({
-      where: { id },
-    });
-    return NextResponse.json(
-      { message: "Teacher deleted successfully" },
-      { status: 200 },
-    );
+    const { id } = params;
+    await prisma.teacher.delete({ where: { id } });
+    return new NextResponse(null, { status: 204 });
   } catch (error) {
+    console.error("Error deleting teacher:", error);
     return NextResponse.json(
       { error: "Failed to delete teacher" },
       { status: 500 },

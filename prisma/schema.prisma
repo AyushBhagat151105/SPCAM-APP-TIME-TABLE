@@ -1,4 +1,4 @@
-// This is your Prisma schema file
+// prisma/schema.prisma
 
 generator client {
   provider = "prisma-client-js"
@@ -9,6 +9,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// prisma/schema.prisma
+
+// prisma/schema.prisma
+
+model Stream {
+  id         String    @id @default(cuid())
+  streamName String
+  streamcode String    @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  subjects   Subject[] @relation("StreamSubjects")
+  teachers   Teacher[] @relation("TeacherStreams")
+}
+
+model Teacher {
+  id          String      @id @default(cuid())
+  teachername String
+  teachercode String      @unique
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  Timetable   Timetable[]
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id])
+  streams     Stream[]    @relation("TeacherStreams")
+}
+
 model Subject {
   id          String      @id @default(cuid())
   subjectname String
@@ -16,6 +42,8 @@ model Subject {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   Timetable   Timetable[] // One subject can appear in many timetables
+  streamId    String?
+  stream      Stream?     @relation("StreamSubjects", fields: [streamId], references: [id])
 }
 
 model Class {
@@ -25,16 +53,6 @@ model Class {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   Timetable Timetable[] // One class can have many timetables
-}
-
-model Teacher {
-  id          String      @id @default(cuid())
-  teachername String
-  teachercode String      @unique
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  Timetable   Timetable[] // One teacher can have many timetables
-  User        User?
 }
 
 model User {
@@ -49,8 +67,8 @@ model User {
   banned        Boolean?
   banReason     String?
   banExpires    DateTime?
-  teacherCode   String?   @unique // Linking User to Teacher by teacherCode
-  teacher       Teacher?  @relation(fields: [teacherCode], references: [teachercode]) // Linking user and teacher via teacherCode
+  teacherCode   String?   @unique
+  teachers      Teacher[] @relation // One user can have many teachers
   sessions      Session[]
   accounts      Account[]
 
