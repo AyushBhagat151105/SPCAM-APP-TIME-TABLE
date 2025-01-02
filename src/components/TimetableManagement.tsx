@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { FaCalendarAlt, FaClock, FaPlus } from "react-icons/fa";
 
 interface TimetableData {
   [day: string]: {
@@ -36,18 +37,35 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
     "01:45 TO 02:40",
     "02:40 TO 03:35",
   ];
-  const initialData: TimetableData = {
-    MONDAY: {},
-    TUESDAY: {},
-    WEDNESDAY: {},
-    THURSDAY: {},
-    FRIDAY: {},
-    SATURDAY: {},
-  };
+  const classes = [
+    "BCA(A)-II",
+    "BCA(B)-II",
+    "BCA-IV",
+    "BCA-VI",
+    "BBA(G)-IV",
+    "BBA(G)-VI",
+    "BBA(ISM)-IV",
+    "BBA(ISM)-VI",
+  ];
+  const faculties = ["JD", "AR", "VS", "SP", "CP", "KG", "JP"];
+  const subjects = [
+    "DBMS",
+    "SAD",
+    "JAVA-LAB",
+    "OPP'S",
+    "C-PROGRAMMING",
+    "WAD",
+    "CS",
+    "ITF",
+  ];
+
+  const initialData: TimetableData = days.reduce((acc, day) => {
+    acc[day] = {};
+    return acc;
+  }, {} as TimetableData);
 
   const [timetableData, setTimetableData] =
     useState<TimetableData>(initialData);
-
   const [formData, setFormData] = useState({
     day: "",
     time: "",
@@ -57,22 +75,15 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
   });
 
   const getColorForDay = (day: string): string => {
-    switch (day) {
-      case "MONDAY":
-        return "bg-blue-600";
-      case "TUESDAY":
-        return "bg-green-600";
-      case "WEDNESDAY":
-        return "bg-red-600";
-      case "THURSDAY":
-        return "bg-purple-600";
-      case "FRIDAY":
-        return "bg-indigo-600";
-      case "SATURDAY":
-        return "bg-yellow-600";
-      default:
-        return "bg-gray-700";
-    }
+    const colors = {
+      MONDAY: "bg-blue-600",
+      TUESDAY: "bg-green-600",
+      WEDNESDAY: "bg-red-600",
+      THURSDAY: "bg-purple-600",
+      FRIDAY: "bg-indigo-600",
+      SATURDAY: "bg-yellow-600",
+    };
+    return colors[day as keyof typeof colors] || "bg-gray-700";
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -103,126 +114,143 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
 
     updatedData[day][time][lecture] = { faculty, subject };
     setTimetableData(updatedData);
+
+    // Reset form after assignment
+    setFormData({
+      day: "",
+      time: "",
+      faculty: "",
+      subject: "",
+      lecture: "",
+    });
   };
 
   return (
-    <div className="container max-w-full sm:max-w-7xl mx-auto p-4 sm:p-6 bg-gray-900 text-gray-100 rounded-lg shadow-lg">
-      <h1 className="text-center text-2xl sm:text-3xl font-bold text-orange-400 mb-4">
-        Sardar Patel College of Administration & Management
-      </h1>
-      <h2 className="text-center text-lg sm:text-xl text-gray-300 mb-6">
-        Timetable Management
-      </h2>
+    <div className="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen py-12 px-4">
+      <div className="container max-w-full sm:max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-center mb-10">
+          <FaCalendarAlt className="text-4xl text-indigo-400 mr-4" />
+          <h1 className="text-4xl font-bold text-white">
+            Timetable Management
+          </h1>
+        </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full border border-gray-700 bg-gray-800 rounded-lg overflow-hidden">
-          <thead>
-            <tr className="bg-orange-500">
-              <th className="p-3 text-left text-gray-100">TIME</th>
-              <th>BCA(A)-II</th>
-              <th>BCA(B)-II</th>
-              <th>BCA-IV</th>
-              <th>BCA-VI</th>
-              <th>BBA(G)-IV</th>
-              <th>BBA(G)-VI</th>
-              <th>BBA(ISM)-IV</th>
-              <th>BBA(ISM)-VI</th>
-            </tr>
-          </thead>
-          <tbody>
-            {days.map((day) => (
-              <React.Fragment key={day}>
-                <tr>
-                  <td
-                    colSpan={9}
-                    className={`p-3 text-center font-bold text-gray-900 ${getColorForDay(day)}`}
-                  >
-                    {day}
-                  </td>
-                </tr>
-                {timeSlots.map((time) => (
-                  <tr key={time} className="border-t border-gray-700">
-                    <td className="p-3">{time}</td>
-                    {[
-                      "BCA(A)-II",
-                      "BCA(B)-II",
-                      "BCA-IV",
-                      "BCA-VI",
-                      "BBA(G)-IV",
-                      "BBA(G)-VI",
-                      "BBA(ISM)-IV",
-                      "BBA(ISM)-VI",
-                    ].map((className) => (
-                      <td key={className} className="p-3 text-center">
-                        {timetableData[day]?.[time]?.[className]
-                          ? `${timetableData[day][time][className].subject} (${timetableData[day][time][className].faculty})`
-                          : "-"}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {isAdmin && (
-        <>
-          <div className="flex flex-wrap gap-4 mt-6">
-            {["day", "time", "faculty", "subject", "lecture"].map((id) => (
-              <select
-                key={id}
-                id={id}
-                value={formData[id as keyof typeof formData]}
-                onChange={handleInputChange}
-                className="p-3 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 w-full sm:w-auto"
-              >
-                <option value="" disabled>
-                  SELECT {id.toUpperCase()}
-                </option>
-                {id === "day" &&
-                  days.map((day) => <option key={day}>{day}</option>)}
-                {id === "time" &&
-                  timeSlots.map((time) => <option key={time}>{time}</option>)}
-                {id === "faculty" &&
-                  ["JD", "AR", "VS", "SP", "CP", "KG", "JP"].map((faculty) => (
-                    <option key={faculty}>{faculty}</option>
-                  ))}
-                {id === "subject" &&
-                  [
-                    "DBMS",
-                    "SAD",
-                    "JAVA-LAB",
-                    "OPP'S",
-                    "C-PROGRAMMING",
-                    "WAD",
-                    "CS",
-                    "ITF",
-                  ].map((subject) => <option key={subject}>{subject}</option>)}
-                {id === "lecture" &&
-                  [
-                    "BCA(A)-II",
-                    "BCA(B)-II",
-                    "BCA-IV",
-                    "BCA-VI",
-                    "BBA(G)-IV",
-                    "BBA(G)-VI",
-                    "BBA(ISM)-IV",
-                    "BBA(ISM)-VI",
-                  ].map((lecture) => <option key={lecture}>{lecture}</option>)}
-              </select>
-            ))}
+        {/* Timetable */}
+        <div className="bg-gray-800 shadow-xl rounded-lg overflow-x-auto mb-10">
+          <div className="px-6 py-4 bg-gray-700">
+            <h2 className="text-2xl font-semibold text-white flex items-center">
+              <FaClock className="mr-3 text-indigo-400" />
+              College Timetable
+            </h2>
           </div>
 
-          <button
-            onClick={assignLecture}
-            className="p-3 mt-6 rounded bg-orange-600 text-gray-100 hover:bg-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-400 w-full sm:w-auto"
-          >
-            Assign Lecture
-          </button>
-        </>
-      )}
+          <table className="w-full">
+            <thead className="bg-gray-700">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  TIME
+                </th>
+                {classes.map((className) => (
+                  <th
+                    key={className}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider"
+                  >
+                    {className}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {days.map((day) => (
+                <React.Fragment key={day}>
+                  <tr>
+                    <td
+                      colSpan={classes.length + 1}
+                      className={`p-3 text-center font-bold text-white ${getColorForDay(day)}`}
+                    >
+                      {day}
+                    </td>
+                  </tr>
+                  {timeSlots.map((time) => (
+                    <tr key={time} className="border-t border-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-white">
+                        {time}
+                      </td>
+                      {classes.map((className) => (
+                        <td
+                          key={className}
+                          className="px-6 py-4 whitespace-nowrap text-white"
+                        >
+                          {timetableData[day]?.[time]?.[className]
+                            ? `${timetableData[day][time][className].subject} (${timetableData[day][time][className].faculty})`
+                            : "-"}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Admin Controls */}
+        {isAdmin && (
+          <div className="bg-gray-800 shadow-xl rounded-lg p-8">
+            <div className="flex items-center mb-6">
+              <FaPlus className="text-2xl text-indigo-400 mr-3" />
+              <h2 className="text-2xl font-semibold text-white">
+                Assign Lecture
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {(["day", "time", "faculty", "subject", "lecture"] as const).map(
+                (id) => (
+                  <div key={id} className="relative">
+                    <select
+                      id={id}
+                      value={formData[id]}
+                      onChange={handleInputChange}
+                      className=" p-3 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                    >
+                      <option value="" disabled>
+                        SELECT {id.toUpperCase()}
+                      </option>
+                      {id === "day" &&
+                        days.map((day) => <option key={day}>{day}</option>)}
+                      {id === "time" &&
+                        timeSlots.map((time) => (
+                          <option key={time}>{time}</option>
+                        ))}
+                      {id === "faculty" &&
+                        faculties.map((faculty) => (
+                          <option key={faculty}>{faculty}</option>
+                        ))}
+                      {id === "subject" &&
+                        subjects.map((subject) => (
+                          <option key={subject}>{subject}</option>
+                        ))}
+                      {id === "lecture" &&
+                        classes.map((lecture) => (
+                          <option key={lecture}>{lecture}</option>
+                        ))}
+                    </select>
+                  </div>
+                ),
+              )}
+            </div>
+
+            <button
+              onClick={assignLecture}
+              className="p-3 mt-6 rounded bg-orange-600 text-gray-100 hover:bg-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-400 w-full"
+            >
+              Assign Lecture
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

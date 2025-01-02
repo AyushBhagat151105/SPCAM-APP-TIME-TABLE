@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { FaBook, FaPlus, FaEdit, FaTrash, FaSearch } from "react-icons/fa";
 
 type Subject = {
   id: string;
@@ -15,7 +16,8 @@ const SubjectManagement = () => {
     subjectcode: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch subjects from the backend
   const fetchSubjects = async () => {
@@ -27,13 +29,10 @@ const SubjectManagement = () => {
       const data = await res.json();
       setSubjects(data.subjects);
     } catch (error) {
-      if (error instanceof Error) {
-        console.error("Error fetching subjects:", error);
-        alert(`Error fetching subjects: ${error.message}`);
-      } else {
-        console.error("Unknown error fetching subjects");
-        alert("Unknown error fetching subjects");
-      }
+      console.error("Error fetching subjects:", error);
+      alert(
+        `Error fetching subjects: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   };
 
@@ -79,11 +78,9 @@ const SubjectManagement = () => {
       setSubjectData({ subjectname: "", subjectcode: "" });
       fetchSubjects();
     } catch (error) {
-      if (error instanceof Error) {
-        alert(`Error: ${error.message}`);
-      } else {
-        alert("Unknown error occurred");
-      }
+      alert(
+        `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -106,11 +103,9 @@ const SubjectManagement = () => {
       alert("Subject deleted successfully.");
       fetchSubjects();
     } catch (error) {
-      if (error instanceof Error) {
-        alert(`Error: ${error.message}`);
-      } else {
-        alert("Unknown error occurred");
-      }
+      alert(
+        `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   };
 
@@ -123,104 +118,171 @@ const SubjectManagement = () => {
     });
   };
 
+  // Filter subjects based on search term
+  const filteredSubjects = subjects.filter(
+    (subject) =>
+      subject.subjectname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      subject.subjectcode.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
   return (
-    <div className="bg-gray-900 text-white min-h-screen py-8 px-4">
-      <h1 className="text-3xl font-bold text-center mb-8">
-        Subject Management
-      </h1>
+    <div className="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen py-12 px-4">
+      <div className="container mx-auto max-w-4xl">
+        {/* Header */}
+        <div className="flex items-center justify-center mb-10">
+          <FaBook className="text-4xl text-indigo-400 mr-4" />
+          <h1 className="text-4xl font-bold text-white">Subject Management</h1>
+        </div>
 
-      {/* Add/Edit Subject Form */}
-      <div className="bg-gray-800 p-6 rounded-lg mb-8 max-w-lg mx-auto">
-        <h2 className="text-2xl mb-4">
-          {editSubject ? "Edit Subject" : "Add New Subject"}
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Subject Name
-            </label>
-            <input
-              type="text"
-              value={subjectData.subjectname}
-              onChange={(e) =>
-                setSubjectData({ ...subjectData, subjectname: e.target.value })
-              }
-              className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            {errors.subjectname && (
-              <p className="text-sm text-red-400 mt-1">{errors.subjectname}</p>
-            )}
+        {/* Add/Edit Subject Form */}
+        <div className="bg-gray-800 shadow-xl rounded-lg p-8 mb-10">
+          <div className="flex items-center mb-6">
+            <FaPlus className="text-2xl text-indigo-400 mr-3" />
+            <h2 className="text-2xl font-semibold text-white">
+              {editSubject ? "Edit Subject" : "Add New Subject"}
+            </h2>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Subject Code
-            </label>
-            <input
-              type="text"
-              value={subjectData.subjectcode}
-              onChange={(e) =>
-                setSubjectData({ ...subjectData, subjectcode: e.target.value })
-              }
-              className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            {errors.subjectcode && (
-              <p className="text-sm text-red-400 mt-1">{errors.subjectcode}</p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-2 mt-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {isSubmitting
-              ? "Submitting..."
-              : editSubject
-                ? "Update Subject"
-                : "Add Subject"}
-          </button>
-        </form>
-      </div>
-
-      {/* Subject List */}
-      <div className="overflow-x-auto bg-gray-800 p-6 rounded-lg">
-        <h2 className="text-2xl font-semibold mb-4">Subject List</h2>
-        <table className="w-full table-auto border-collapse">
-          <thead>
-            <tr>
-              <th className="px-4 py-2 text-left border-b text-lg">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Subject Name
-              </th>
-              <th className="px-4 py-2 text-left border-b text-lg">
+              </label>
+              <input
+                type="text"
+                value={subjectData.subjectname}
+                onChange={(e) =>
+                  setSubjectData({
+                    ...subjectData,
+                    subjectname: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white
+                border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              {errors.subjectname && (
+                <p className="text-sm text-red-400 mt-1">
+                  {errors.subjectname}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Subject Code
-              </th>
-              <th className="px-4 py-2 text-left border-b text-lg">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subjects.map((subject) => (
-              <tr key={subject.id} className="border-b">
-                <td className="px-4 py-2">{subject.subjectname}</td>
-                <td className="px-4 py-2">{subject.subjectcode}</td>
-                <td className="px-4 py-2">
-                  <button
-                    onClick={() => handleEdit(subject)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 mr-2"
+              </label>
+              <input
+                type="text"
+                value={subjectData.subjectcode}
+                onChange={(e) =>
+                  setSubjectData({
+                    ...subjectData,
+                    subjectcode: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white
+                border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              {errors.subjectcode && (
+                <p className="text-sm text-red-400 mt-1">
+                  {errors.subjectcode}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-3 mt-4 bg-indigo-600 hover:bg-indigo-700
+              text-white rounded-lg font-semibold transition duration-300
+              transform hover:scale-105 focus:outline-none focus:ring-2
+              focus:ring-indigo-500 flex items-center justify-center"
+            >
+              {isSubmitting ? (
+                "Submitting..."
+              ) : editSubject ? (
+                <>
+                  <FaEdit className="mr-2" /> Update Subject
+                </>
+              ) : (
+                <>
+                  <FaPlus className="mr-2" /> Add Subject
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Search Input */}
+        <div className="relative mb-6">
+          <input
+            type="text"
+            placeholder="Search subjects..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-3 pl-10 rounded-lg bg-gray-800
+            text-white border border-gray-700 focus:outline-none
+            focus:ring-2 focus:ring-indigo-500"
+          />
+          <FaSearch className="absolute left-3 top-1/2 transform -translate-y -1/2 text-gray-400" />
+        </div>
+
+        {/* Subject List */}
+        <div className="bg-gray-800 shadow-xl rounded-lg overflow-hidden">
+          <div className="px-6 py-4 bg-gray-700">
+            <h2 className="text-2xl font-semibold text-white flex items-center">
+              <FaBook className="mr-3 text-indigo-400" />
+              Subject List
+            </h2>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-700">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Subject Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Subject Code
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-700">
+                {filteredSubjects.map((subject) => (
+                  <tr
+                    key={subject.id}
+                    className="hover:bg-gray-700 transition duration-300"
                   >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(subject.id)}
-                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    <td className="px-6 py-4 whitespace-nowrap text-white">
+                      {subject.subjectname}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-white">
+                      {subject.subjectcode}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => handleEdit(subject)}
+                        className="text-blue-400 hover:text-blue-300 mr-4 transition duration-300"
+                      >
+                        <FaEdit className="text-xl" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(subject.id)}
+                        className="text-red-400 hover:text-red-300 transition duration-300"
+                      >
+                        <FaTrash className="text-xl" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );
