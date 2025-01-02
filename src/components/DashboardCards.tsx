@@ -46,25 +46,37 @@ const DashboardCards = () => {
 
   const cardData = [
     {
-      title: "Teachers",
+      title: "Total Teachers",
       count: counts.teachers,
       icon: FaChalkboardTeacher,
-      gradient: "from-purple-500 to-indigo-500",
-      shadowColor: "shadow-purple-500/50",
+      bgColor: "bg-gray-800",
+      borderColor: "border-gray-700",
+      textColor: "text-gray-100",
+      iconBgColor: "bg-gray-700",
+      accentColor: "text-gray-400",
+      iconColor: "text-blue-400",
     },
     {
-      title: "Classes",
+      title: "Total Classes",
       count: counts.classes,
       icon: FaSchool,
-      gradient: "from-green-500 to-teal-500",
-      shadowColor: "shadow-green-500/50",
+      bgColor: "bg-gray-800",
+      borderColor: "border-gray-700",
+      textColor: "text-gray-100",
+      iconBgColor: "bg-gray-700",
+      accentColor: "text-gray-400",
+      iconColor: "text-green-400",
     },
     {
-      title: "Users",
+      title: "Total Users",
       count: counts.users,
       icon: FaUserFriends,
-      gradient: "from-pink-500 to-red-500",
-      shadowColor: "shadow-pink-500/50",
+      bgColor: "bg-gray-800",
+      borderColor: "border-gray-700",
+      textColor: "text-gray-100",
+      iconBgColor: "bg-gray-700",
+      accentColor: "text-gray-400",
+      iconColor: "text-indigo-400",
     },
   ];
 
@@ -74,13 +86,13 @@ const DashboardCards = () => {
         {[1, 2, 3].map((_, index) => (
           <div
             key={index}
-            className="bg-gray-800 p-6 rounded-lg shadow-lg animate-pulse"
+            className="bg-gray-800 border border-gray-700 rounded-lg shadow-md p-6 animate-pulse"
           >
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-4">
               <div className="h-10 w-10 bg-gray-700 rounded-full"></div>
-              <div className="h-8 w-20 bg-gray-700 rounded"></div>
+              <div className="h-6 w-20 bg-gray-700 rounded"></div>
             </div>
-            <div className="mt-4 h-6 bg-gray-700 rounded w-full"></div>
+            <div className="h-8 bg-gray-700 rounded w-full"></div>
           </div>
         ))}
       </div>
@@ -95,33 +107,75 @@ const DashboardCards = () => {
           <div
             key={index}
             className={`
-              bg-gradient-to-r ${card.gradient} 
-              p-6 rounded-2xl shadow-2xl ${card.shadowColor}
-              text-center transform transition duration-500 
-              hover:scale-105 hover:rotate-3 
-              relative overflow-hidden
+              ${card.bgColor} 
+              ${card.borderColor}
+              border
+              rounded-lg 
+              shadow-lg 
+              p-6 
+              transform 
+              transition 
+              duration-300 
+              hover:shadow-xl 
+              hover:-translate-y-2
+              relative
+              overflow-hidden
             `}
           >
-            {/* Background Icon */}
-            <div className="absolute -top-10 -right-10 opacity-20">
-              <IconComponent className="text-8xl" />
-            </div>
-
-            {/* Card Content */}
-            <div className="relative z-10">
-              <div className="flex justify-between items-center mb-4">
-                <IconComponent className="text-4xl text-white" />
-                <span className="text-xl font-medium text-white/70">
-                  {card.title}
-                </span>
+            <div className="flex justify-between items-center mb-4">
+              <div
+                className={`
+                  ${card.iconBgColor} 
+                  ${card.iconColor}
+                  p-3 
+                  rounded-full 
+                  shadow-md 
+                  flex 
+                  items-center 
+                  justify-center
+                `}
+              >
+                <IconComponent className="text-2xl" />
               </div>
-
-              <CountUp
-                end={card.count}
-                duration={1.5}
-                className="text-5xl font-bold text-white block"
-              />
+              <span
+                className={`
+                  ${card.accentColor} 
+                  text-sm 
+                  font-medium 
+                  uppercase 
+                  tracking-wider
+                `}
+              >
+                {card.title}
+              </span>
             </div>
+
+            <CountUp
+              end={card.count}
+              duration={1.5}
+              className={`
+                ${card.textColor} 
+                text-3xl 
+                font-bold 
+                block
+                mb-2
+              `}
+            />
+
+            {/* Subtle Gradient Overlay */}
+            <div
+              className="
+                absolute
+                bottom-0
+                left-0
+                w-full
+                h-1
+                bg-gradient-to-r
+                from-transparent
+                via-gray-700
+                to-transparent
+              "
+            ></div>
           </div>
         );
       })}

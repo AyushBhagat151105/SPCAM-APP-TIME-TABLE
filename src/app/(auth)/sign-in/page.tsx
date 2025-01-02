@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import { z } from "zod";
 import {
   Form,
@@ -26,7 +25,7 @@ import { useForm } from "react-hook-form";
 import { signInFormSchema } from "@/lib/auth-schema";
 import { toast } from "@/hooks/use-toast";
 import { authClient } from "@/lib/auth-client";
-import { getSession } from "better-auth/api";
+import { FaSignInAlt } from "react-icons/fa";
 
 export default function SignIn() {
   const form = useForm<z.infer<typeof signInFormSchema>>({
@@ -47,7 +46,6 @@ export default function SignIn() {
       return;
     }
 
-    console.log("Sending sign-in request...");
     try {
       await authClient.signIn.email(
         {
@@ -58,14 +56,17 @@ export default function SignIn() {
         {
           onRequest: () => {
             toast({
-              title: "Please wait...",
+              title: "Authenticating...",
             });
           },
           onSuccess: () => {
             form.reset();
           },
           onError: (ctx) => {
-            toast({ title: ctx.error.message, variant: "destructive" });
+            toast({
+              title: ctx.error.message,
+              variant: "destructive",
+            });
             form.setError("email", {
               type: "manual",
               message: ctx.error.message,
@@ -83,9 +84,12 @@ export default function SignIn() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto bg-white/5 backdrop-blur-xl">
+    <Card className="w-full max-w-md mx-auto bg-gray-800 rounded-2xl shadow-2xl">
       <CardHeader>
-        <CardTitle>Sign In</CardTitle>
+        <CardTitle className="flex items-center">
+          <FaSignInAlt className="mr-2" />
+          Sign In
+        </CardTitle>
         <CardDescription>
           Welcome back! Please sign in to continue.
         </CardDescription>
@@ -93,7 +97,7 @@ export default function SignIn() {
 
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 ">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="email"
