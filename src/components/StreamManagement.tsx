@@ -1,11 +1,25 @@
 "use client";
 import { useState, useEffect } from "react";
 import { FaStream, FaPlus, FaEdit, FaTrash, FaSearch } from "react-icons/fa";
+import {
+  createStream,
+  deleteStream,
+  getStreams,
+  updateStream,
+} from "@/app/action/stream/action";
 
+// Define the Stream type
 type Stream = {
   id: string;
   streamName: string;
   streamcode: string;
+};
+
+// Define API response type
+type StreamApiResponse = {
+  success: boolean;
+  streams?: Stream[];
+  error?: string;
 };
 
 const StreamManagement = () => {
@@ -19,72 +33,76 @@ const StreamManagement = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch Streams
+  // Fetch streams
   const fetchStreams = async () => {
     try {
-      const response = await fetch("/api/streams");
-      if (!response.ok) {
-        throw new Error("Failed to fetch streams");
+      const result: StreamApiResponse = await getStreams();
+      if (result.success && result.streams) {
+        setStreams(result.streams);
+      } else {
+        console.error("Error fetching streams:", result.error);
+        alert(`Error fetching streams: ${result.error || "Unknown error"}`);
       }
-      const data = await response.json();
-      setStreams(data.streams);
     } catch (error) {
-      console.error("Error fetching streams:", error);
-      alert(
-        `Error fetching streams: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      console.error("Error:", error);
+      alert("An error occurred while fetching streams.");
     }
   };
 
-  // Initial Data Fetch
+  // Initial fetch
   useEffect(() => {
     fetchStreams();
   }, []);
 
-  // Handle Form Submission
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     // Validation
-    if (!streamData.streamName || !streamData.streamcode) {
-      setErrors({
-        streamName: !streamData.streamName ? "Stream name is required" : "",
-        streamcode: !streamData.streamcode ? "Stream code is required" : "",
-      });
+    const validationErrors: Record<string, string> = {};
+    if (!streamData.streamName) {
+      validationErrors.streamName = "Stream name is required.";
+    }
+    if (!streamData.streamcode) {
+      validationErrors.streamcode = "Stream code is required.";
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       setIsSubmitting(false);
       return;
     }
 
-    const method = editStream ? "PUT" : "POST";
-    const url = editStream ? `/api/streams/${editStream.id}` : "/api/streams";
-
     try {
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(streamData),
-      });
+      let result;
+      const formData = new FormData();
+      formData.append("streamName", streamData.streamName);
+      formData.append("streamcode", streamData.streamcode);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save stream");
+      if (editStream) {
+        result = await updateStream(editStream.id, formData);
+      } else {
+        result = await createStream(formData);
       }
 
-      alert(`Stream ${editStream ? "updated" : "added"} successfully.`);
-      setEditStream(null);
-      setStreamData({ streamName: "", streamcode: "" });
-      fetchStreams();
+      if (result.success) {
+        alert(`Stream ${editStream ? "updated" : "added"} successfully.`);
+        setEditStream(null);
+        setStreamData({ streamName: "", streamcode: "" });
+        fetchStreams();
+      } else {
+        alert(`Error: ${result.error || "Failed to save stream."}`);
+      }
     } catch (error) {
-      alert(
-        `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      console.error("Error:", error);
+      alert("An error occurred during submission.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Handle Edit
+  // Handle edit
   const handleEdit = (stream: Stream) => {
     setEditStream(stream);
     setStreamData({
@@ -93,30 +111,25 @@ const StreamManagement = () => {
     });
   };
 
-  // Handle Delete
+  // Handle delete
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this stream?")) return;
 
     try {
-      const response = await fetch(`/api/streams/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete stream");
+      const result = await deleteStream(id);
+      if (result.success) {
+        alert("Stream deleted successfully.");
+        fetchStreams();
+      } else {
+        alert(`Error: ${result.error || "Failed to delete stream."}`);
       }
-
-      alert("Stream deleted successfully.");
-      fetchStreams();
     } catch (error) {
-      alert(
-        `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      console.error("Error:", error);
+      alert("An error occurred while deleting the stream.");
     }
   };
 
-  // Filter streams based on search term
+  // Filter streams
   const filteredStreams = streams.filter(
     (stream) =>
       stream.streamName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -152,8 +165,7 @@ const StreamManagement = () => {
                 onChange={(e) =>
                   setStreamData({ ...streamData, streamName: e.target.value })
                 }
-                className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white
-                border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               {errors.streamName && (
                 <p className="text-sm text-red-400 mt-1">{errors.streamName}</p>
@@ -170,8 +182,7 @@ const StreamManagement = () => {
                 onChange={(e) =>
                   setStreamData({ ...streamData, streamcode: e.target.value })
                 }
-                className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white
-                border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               {errors.streamcode && (
                 <p className="text-sm text-red-400 mt-1">{errors.streamcode}</p>
@@ -181,10 +192,7 @@ const StreamManagement = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 mt-4 bg-indigo-600 hover:bg-indigo-700
-              text-white rounded-lg font-semibold transition duration-300
-              transform hover:scale-105 focus:outline-none focus:ring-2
-              focus:ring-indigo-500 flex items-center justify-center"
+              className="w-full py-3 mt-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-center"
             >
               {isSubmitting ? (
                 "Submitting..."
@@ -208,11 +216,9 @@ const StreamManagement = () => {
             placeholder="Search streams..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-3 pl-10 rounded-lg bg-gray-800
-            text-white border border-gray-700 focus:outline-none
-            focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-4 py-3 pl-10 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y -1/2 text-gray-400" />
+          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
 
         {/* Stream List */}
@@ -252,24 +258,32 @@ const StreamManagement = () => {
                       {stream.streamcode}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleEdit(stream)}
-                        className="text-blue-400 hover:text-blue-300 mr-4 transition duration-300"
-                      >
-                        <FaEdit className="text-xl" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(stream.id)}
-                        className="text-red-400 hover:text-red-300 transition duration-300"
-                      >
-                        <FaTrash className="text-xl" />
-                      </button>
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={() => handleEdit(stream)}
+                          className="text-blue-500 hover:text-blue-700 transition duration-300"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(stream.id)}
+                          className="text-red-500 hover:text-red-700 transition duration-300"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          {filteredStreams.length === 0 && (
+            <div className="p-6 text-center text-gray-400">
+              No streams found.
+            </div>
+          )}
         </div>
       </div>
     </div>

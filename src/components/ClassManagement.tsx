@@ -1,5 +1,5 @@
-// src/components/ClassManagement.tsx
 "use client";
+
 import { useState, useEffect } from "react";
 import {
   FaChalkboardTeacher,
@@ -8,6 +8,18 @@ import {
   FaTrash,
   FaSearch,
 } from "react-icons/fa";
+import {
+  createClass,
+  deleteClass,
+  fetchClasses,
+  updateClass,
+} from "@/app/action/classes/actions";
+
+// Define a type for the errors state
+type Errors = {
+  classname?: string;
+  classroom?: string;
+};
 
 const ClassManagement = () => {
   type Class = {
@@ -23,28 +35,22 @@ const ClassManagement = () => {
     classroom: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Errors>({});
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch classes from the backend
-  const fetchClasses = async () => {
+  // Fetch classes from the server
+  const loadClasses = async () => {
     try {
-      const res = await fetch("/api/classes", { method: "GET" });
-      if (!res.ok) {
-        throw new Error("Failed to fetch classes");
-      }
-      const data = await res.json();
-      setClasses(data.classes);
+      const data = await fetchClasses();
+      setClasses(data);
     } catch (error) {
       console.error("Error fetching classes:", error);
-      alert(
-        `Error fetching classes: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      alert("Failed to load classes.");
     }
   };
 
   useEffect(() => {
-    fetchClasses();
+    loadClasses();
   }, []);
 
   // Handle form submission for adding/updating a class
@@ -52,65 +58,51 @@ const ClassManagement = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!classData.classname || !classData.classroom) {
-      setErrors({
-        classname: !classData.classname ? "Class name is required" : "",
-        classroom: !classData.classroom ? "Classroom is required" : "",
-      });
-      setIsSubmitting(false);
-      return;
+    const formData = new FormData();
+    formData.append("classname", classData.classname);
+    formData.append("classroom", classData.classroom);
+
+    if (editClass) {
+      formData.append("id", editClass.id);
     }
 
-    const method = editClass ? "PUT" : "POST";
-    const url = editClass ? `/api/classes/${editClass.id}` : "/api/classes";
-
     try {
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(classData),
-      });
+      const response = editClass
+        ? await updateClass(formData)
+        : await createClass(formData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save class");
+      if (!response.success) {
+        setErrors({ classname: response.message });
+        return;
       }
 
-      alert(`Class ${editClass ? "updated" : "added"} successfully`);
+      alert(response.message);
       setEditClass(null);
       setClassData({ classname: "", classroom: "" });
-      fetchClasses();
-    } catch (error) {
-      alert(
-        `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      loadClasses();
+    } catch {
+      alert("An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Handle the delete functionality
+  // Handle delete functionality
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this class?")) return;
 
     try {
-      const response = await fetch(`/api/classes/${id}`, {
-        method: "DELETE",
-      });
+      const response = await deleteClass(id);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete class");
+      if (!response.success) {
+        alert(response.message);
+        return;
       }
 
-      alert("Class deleted successfully.");
-      fetchClasses();
-    } catch (error) {
-      alert(
-        `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      alert(response.message);
+      loadClasses();
+    } catch {
+      alert("Failed to delete class.");
     }
   };
 
@@ -153,23 +145,17 @@ const ClassManagement = () => {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Class Name
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={classData.classname}
-                  onChange={(e) =>
-                    setClassData({ ...classData, classname: e.target.value })
-                  }
-                  className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white
-                  border border-transparent focus:outline-none focus:ring-2
-                  focus:ring-indigo-500 transition duration-300"
-                />
-                {errors.classname && (
-                  <p className="text-sm text-red-400 mt-1">
-                    {errors.classname}
-                  </p>
-                )}
-              </div>
+              <input
+                type="text"
+                value={classData.classname}
+                onChange={(e) =>
+                  setClassData({ ...classData, classname: e.target.value })
+                }
+                className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white"
+              />
+              {errors.classname && (
+                <p className="text-sm text-red-400 mt-1">{errors.classname}</p>
+              )}
             </div>
 
             <div>
@@ -182,9 +168,7 @@ const ClassManagement = () => {
                 onChange={(e) =>
                   setClassData({ ...classData, classroom: e.target.value })
                 }
-                className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white
-                border border-transparent focus:outline-none focus:ring-2
-                focus:ring-indigo-500 transition duration-300"
+                className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white"
               />
               {errors.classroom && (
                 <p className="text-sm text-red-400 mt-1">{errors.classroom}</p>
@@ -194,22 +178,13 @@ const ClassManagement = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 mt-4 bg-indigo-600 hover:bg-indigo-700
-              text-white rounded-lg font-semibold transition duration-300
-              transform hover:scale-105 focus:outline-none focus:ring-2
-              focus:ring-indigo-500 flex items-center justify-center"
+              className="w-full py-3 bg-indigo-600 text-white rounded-lg"
             >
-              {isSubmitting ? (
-                <span>Submitting...</span>
-              ) : editClass ? (
-                <>
-                  <FaEdit className="mr-2" /> Update Class
-                </>
-              ) : (
-                <>
-                  <FaPlus className="mr-2" /> Add Class
-                </>
-              )}
+              {isSubmitting
+                ? "Submitting..."
+                : editClass
+                  ? "Update Class"
+                  : "Add Class"}
             </button>
           </form>
         </div>
@@ -221,9 +196,7 @@ const ClassManagement = () => {
             placeholder="Search classes..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-3 pl-10 rounded-lg bg-gray-800
-            text-white border border-gray-700 focus:outline-none
-             focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white"
           />
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
@@ -231,50 +204,42 @@ const ClassManagement = () => {
         {/* Class List */}
         <div className="bg-gray-800 shadow-xl rounded-lg overflow-hidden">
           <div className="px-6 py-4 bg-gray-700">
-            <h2 className="text-2xl font-semibold text-white flex items-center">
-              <FaChalkboardTeacher className="mr-3 text-indigo-400" />
-              Class List
-            </h2>
+            <h2 className="text-2xl font-semibold text-white">Class List</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-gray-300">
                     Class Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-gray-300">
                     Classroom
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-gray-300">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-700">
+              <tbody>
                 {filteredClasses.map((classItem) => (
-                  <tr
-                    key={classItem.id}
-                    className="hover:bg-gray-700 transition duration-300"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-white">
+                  <tr key={classItem.id}>
+                    <td className="px-6 py-4 text-white">
                       {classItem.classname}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-white">
+                    <td className="px-6 py-4 text-white">
                       {classItem.classroom}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <button
                         onClick={() => handleEdit(classItem)}
-                        className="text-blue-400 hover:text-blue-300 mr-4 transition duration-300"
+                        className="mr-4 text-blue-400"
                       >
-                        <FaEdit className="text-xl" />
+                        <FaEdit />
                       </button>
                       <button
                         onClick={() => handleDelete(classItem.id)}
-                        className="text-red-400 hover:text-red-300 transition duration-300"
+                        className="text-red-400"
                       >
-                        <FaTrash className="text-xl" />
+                        <FaTrash />
                       </button>
                     </td>
                   </tr>

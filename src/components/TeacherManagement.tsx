@@ -9,6 +9,14 @@ import {
   FaSearch,
   FaFilter,
 } from "react-icons/fa";
+import {
+  createTeacher,
+  deleteTeacher,
+  getAllTeachers,
+  updateTeacher,
+} from "@/app/action/teacher/action";
+import { getStreams } from "@/app/action/stream/action";
+import { getUsers } from "@/app/action/user/action";
 
 type Teacher = {
   id: string;
@@ -50,12 +58,23 @@ const TeacherManagement = () => {
   // Fetch Teachers
   const fetchTeachers = async () => {
     try {
-      const res = await fetch("/api/teachers");
-      if (!res.ok) {
-        throw new Error("Failed to fetch teachers");
+      const result = await getAllTeachers();
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Failed to fetch teachers");
       }
-      const data = await res.json();
-      setTeachers(data.teachers);
+      const teachersData: Teacher[] = result.data.map(
+        (teacher: {
+          id: string;
+          teachername: string;
+          teachercode: string;
+          userId: string | null;
+          streams: Stream[];
+        }) => ({
+          ...teacher,
+          userId: teacher.userId ?? undefined,
+        }),
+      );
+      setTeachers(teachersData);
     } catch (error) {
       console.error("Error fetching teachers:", error);
       alert(
@@ -67,12 +86,11 @@ const TeacherManagement = () => {
   // Fetch Users
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/user");
-      if (!res.ok) {
-        throw new Error("Failed to fetch users");
+      const result = await getUsers();
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Failed to fetch users");
       }
-      const data = await res.json();
-      setUsers(data.users);
+      setUsers(result.data);
     } catch (error) {
       console.error("Error fetching users:", error);
       alert(
@@ -84,12 +102,11 @@ const TeacherManagement = () => {
   // Fetch Streams
   const fetchStreams = async () => {
     try {
-      const res = await fetch("/api/streams");
-      if (!res.ok) {
-        throw new Error("Failed to fetch streams");
+      const result = await getStreams();
+      if (!result.success || !result.streams) {
+        throw new Error(result.error || "Failed to fetch streams");
       }
-      const data = await res.json();
-      setStreams(data.streams);
+      setStreams(result.streams);
     } catch (error) {
       console.error("Error fetching streams:", error);
       alert(
@@ -120,23 +137,16 @@ const TeacherManagement = () => {
       return;
     }
 
-    const method = editTeacher ? "PUT" : "POST";
-    const url = editTeacher
-      ? `/api/teachers/${editTeacher.id}`
-      : "/api/teachers";
-
     try {
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(teacherData),
-      });
+      let result;
+      if (editTeacher) {
+        result = await updateTeacher(editTeacher.id, teacherData);
+      } else {
+        result = await createTeacher(teacherData);
+      }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save teacher");
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
       alert(`Teacher ${editTeacher ? "updated" : "added"} successfully`);
@@ -173,13 +183,9 @@ const TeacherManagement = () => {
     if (!confirm("Are you sure you want to delete this teacher?")) return;
 
     try {
-      const response = await fetch(`/api/teachers/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete teacher");
+      const result = await deleteTeacher(id);
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
       alert("Teacher deleted successfully.");
@@ -441,25 +447,25 @@ const TeacherManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-white">
                       {users.find((user) => user.id === teacher.userId)?.name ||
-                        ""}
+                        "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-white">
                       {teacher.streams
                         ?.map((stream) => stream.streamName)
-                        .join(", ")}
+                        .join(", ") || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
                         onClick={() => handleEdit(teacher)}
-                        className="text-blue-400 hover:text-blue-300 mr-4 transition duration-300"
+                        className="text-indigo-400 hover:text-indigo-600"
                       >
-                        <FaEdit className="text-xl" />
+                        <FaEdit />
                       </button>
                       <button
                         onClick={() => handleDelete(teacher.id)}
-                        className="text-red-400 hover:text-red-300 transition duration-300"
+                        className="text-red-400 hover:text-red-600 ml-4"
                       >
-                        <FaTrash className="text-xl" />
+                        <FaTrash />
                       </button>
                     </td>
                   </tr>

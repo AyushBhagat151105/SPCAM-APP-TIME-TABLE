@@ -1,12 +1,17 @@
 "use client";
 import { useState } from "react";
 
+interface FormErrors {
+  teachername?: string;
+  teachercode?: string;
+}
+
 export const TeacherForm = () => {
   const [formData, setFormData] = useState({
     teachername: "",
     teachercode: "",
   });
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Submit form

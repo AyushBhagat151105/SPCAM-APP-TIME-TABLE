@@ -2,6 +2,9 @@
 import { useEffect, useState } from "react";
 import { FaChalkboardTeacher, FaUserFriends, FaSchool } from "react-icons/fa";
 import CountUp from "react-countup";
+import { countTeachers } from "@/app/action/teacher/action";
+import { countClasses } from "@/app/action/classes/actions";
+import { countUsers } from "@/app/action/user/action";
 
 const DashboardCards = () => {
   const [counts, setCounts] = useState({
@@ -15,23 +18,19 @@ const DashboardCards = () => {
     setIsLoading(true);
     try {
       const [teachersRes, classesRes, usersRes] = await Promise.all([
-        fetch("/api/teachers/count", { method: "GET" }),
-        fetch("/api/classes/count", { method: "GET" }),
-        fetch("/api/user/count", { method: "GET" }),
+        countTeachers(),
+        countClasses(),
+        countUsers(),
       ]);
 
-      if (!teachersRes.ok || !classesRes.ok || !usersRes.ok) {
+      if (teachersRes.error || classesRes.error || usersRes.error) {
         throw new Error("Failed to fetch counts");
       }
 
-      const teachersCount = await teachersRes.json();
-      const classesCount = await classesRes.json();
-      const usersCount = await usersRes.json();
-
       setCounts({
-        teachers: teachersCount.count,
-        classes: classesCount.count,
-        users: usersCount.count,
+        teachers: teachersRes.count ?? 0,
+        classes: classesRes.count ?? 0,
+        users: usersRes.count ?? 0,
       });
     } catch (error) {
       console.error("Error fetching counts:", error);
@@ -107,16 +106,16 @@ const DashboardCards = () => {
           <div
             key={index}
             className={`
-              ${card.bgColor} 
+              ${card.bgColor}
               ${card.borderColor}
               border
-              rounded-lg 
-              shadow-lg 
-              p-6 
-              transform 
-              transition 
-              duration-300 
-              hover:shadow-xl 
+              rounded-lg
+              shadow-lg
+              p-6
+              transform
+              transition
+              duration-300
+              hover:shadow-xl
               hover:-translate-y-2
               relative
               overflow-hidden
@@ -125,13 +124,13 @@ const DashboardCards = () => {
             <div className="flex justify-between items-center mb-4">
               <div
                 className={`
-                  ${card.iconBgColor} 
+                  ${card.iconBgColor}
                   ${card.iconColor}
-                  p-3 
-                  rounded-full 
-                  shadow-md 
-                  flex 
-                  items-center 
+                  p-3
+                  rounded-full
+                  shadow-md
+                  flex
+                  items-center
                   justify-center
                 `}
               >
@@ -139,10 +138,10 @@ const DashboardCards = () => {
               </div>
               <span
                 className={`
-                  ${card.accentColor} 
-                  text-sm 
-                  font-medium 
-                  uppercase 
+                  ${card.accentColor}
+                  text-sm
+                  font-medium
+                  uppercase
                   tracking-wider
                 `}
               >
@@ -154,9 +153,9 @@ const DashboardCards = () => {
               end={card.count}
               duration={1.5}
               className={`
-                ${card.textColor} 
-                text-3xl 
-                font-bold 
+                ${card.textColor}
+                text-3xl
+                font-bold
                 block
                 mb-2
               `}

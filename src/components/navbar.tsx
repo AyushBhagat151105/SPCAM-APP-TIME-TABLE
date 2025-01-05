@@ -4,16 +4,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Image from "next/image";
-import {
-  FaHome,
-  FaChalkboardTeacher,
-  FaBook,
-  FaStream,
-  FaCalendarAlt,
-  FaSignOutAlt,
-  FaSignInAlt,
-  FaUserCog,
-} from "react-icons/fa";
+import { FaSignOutAlt, FaSignInAlt, FaUserCog } from "react-icons/fa";
 
 export default async function Navbar() {
   const session = await auth.api.getSession({
@@ -21,7 +12,6 @@ export default async function Navbar() {
   });
 
   const user = session?.user;
-  const isAdmin = user?.role === "admin";
 
   return (
     <nav className="bg-[#1b1e2e] border-b border-gray-700 shadow-lg">

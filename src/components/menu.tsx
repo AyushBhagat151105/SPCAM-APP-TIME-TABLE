@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  AiOutlineHome,
   AiOutlineUser,
   AiOutlineSetting,
   AiOutlineDashboard,
@@ -13,7 +12,6 @@ import {
   MdSubject,
   MdClass,
   MdOutlineAnnouncement,
-  MdSpaceDashboard,
 } from "react-icons/md";
 import { BsTable } from "react-icons/bs";
 import { FaStream, FaSignOutAlt } from "react-icons/fa";

@@ -2,14 +2,7 @@ import React from "react";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  FaHome,
-  FaUser,
-  FaEnvelope,
-  FaCog,
-  FaChartPie,
-  FaCalendarAlt,
-} from "react-icons/fa";
+import { FaHome, FaUser, FaEnvelope, FaCalendarAlt } from "react-icons/fa";
 import DashboardCards from "@/components/DashboardCards";
 
 const AdminPage = async () => {

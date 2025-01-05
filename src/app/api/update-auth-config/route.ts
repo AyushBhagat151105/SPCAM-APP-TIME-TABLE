@@ -35,7 +35,7 @@ export const auth = betterAuth({
 
     fs.writeFileSync(authConfigPath, newConfig);
     return NextResponse.json({ message: "Configuration updated successfully" });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to update configuration" },
       { status: 500 },

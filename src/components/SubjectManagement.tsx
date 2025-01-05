@@ -1,6 +1,13 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { FaBook, FaPlus, FaEdit, FaTrash, FaSearch } from "react-icons/fa";
+import {
+  createSubject,
+  deleteSubject,
+  getSubjects,
+  updateSubject,
+} from "@/app/action/subject/action";
 
 type Subject = {
   id: string;
@@ -21,18 +28,12 @@ const SubjectManagement = () => {
 
   // Fetch subjects from the backend
   const fetchSubjects = async () => {
-    try {
-      const res = await fetch("/api/subjects");
-      if (!res.ok) {
-        throw new Error("Failed to fetch subjects");
-      }
-      const data = await res.json();
-      setSubjects(data.subjects);
-    } catch (error) {
-      console.error("Error fetching subjects:", error);
-      alert(
-        `Error fetching subjects: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+    const response = await getSubjects();
+    if (response.success && Array.isArray(response.subjects)) {
+      setSubjects(response.subjects);
+    } else {
+      console.error(response.error);
+      alert(response.error || "Failed to fetch subjects.");
     }
   };
 
@@ -40,11 +41,24 @@ const SubjectManagement = () => {
     fetchSubjects();
   }, []);
 
+  // Handle input changes with explicit type casting
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: "subjectname" | "subjectcode",
+  ) => {
+    setSubjectData({
+      ...subjectData,
+      [field]: e.target.value,
+    });
+  };
+
   // Handle form submission for adding/updating a subject
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrors({});
 
+    // Validate inputs
     if (!subjectData.subjectname || !subjectData.subjectcode) {
       setErrors({
         subjectname: !subjectData.subjectname ? "Subject name is required" : "",
@@ -54,33 +68,31 @@ const SubjectManagement = () => {
       return;
     }
 
-    const method = editSubject ? "PUT" : "POST";
-    const url = editSubject
-      ? `/api/subjects/${editSubject.id}`
-      : "/api/subjects";
-
     try {
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(subjectData),
-      });
+      let response;
+      const formData = new FormData();
+      formData.append("subjectname", subjectData.subjectname);
+      formData.append("subjectcode", subjectData.subjectcode);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save subject");
+      if (editSubject) {
+        response = await updateSubject(editSubject.id, formData);
+      } else {
+        response = await createSubject(formData);
       }
 
-      alert(`Subject ${editSubject ? "updated" : "added"} successfully`);
-      setEditSubject(null);
-      setSubjectData({ subjectname: "", subjectcode: "" });
-      fetchSubjects();
+      if (response.success) {
+        alert(`Subject ${editSubject ? "updated" : "added"} successfully`);
+        setEditSubject(null);
+        setSubjectData({ subjectname: "", subjectcode: "" });
+        fetchSubjects();
+      } else {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        setErrors({ form: response.error });
+      }
     } catch (error) {
-      alert(
-        `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      console.error("Error submitting form:", error);
+      alert("Failed to save subject. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -90,22 +102,12 @@ const SubjectManagement = () => {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this subject?")) return;
 
-    try {
-      const response = await fetch(`/api/subjects/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete subject");
-      }
-
+    const response = await deleteSubject(id);
+    if (response.success) {
       alert("Subject deleted successfully.");
       fetchSubjects();
-    } catch (error) {
-      alert(
-        `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+    } else {
+      alert(response.error || "Failed to delete subject.");
     }
   };
 
@@ -151,12 +153,7 @@ const SubjectManagement = () => {
               <input
                 type="text"
                 value={subjectData.subjectname}
-                onChange={(e) =>
-                  setSubjectData({
-                    ...subjectData,
-                    subjectname: e.target.value,
-                  })
-                }
+                onChange={(e) => handleInputChange(e, "subjectname")}
                 className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white
                 border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -174,12 +171,7 @@ const SubjectManagement = () => {
               <input
                 type="text"
                 value={subjectData.subjectcode}
-                onChange={(e) =>
-                  setSubjectData({
-                    ...subjectData,
-                    subjectcode: e.target.value,
-                  })
-                }
+                onChange={(e) => handleInputChange(e, "subjectcode")}
                 className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white
                 border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
@@ -198,17 +190,11 @@ const SubjectManagement = () => {
               transform hover:scale-105 focus:outline-none focus:ring-2
               focus:ring-indigo-500 flex items-center justify-center"
             >
-              {isSubmitting ? (
-                "Submitting..."
-              ) : editSubject ? (
-                <>
-                  <FaEdit className="mr-2" /> Update Subject
-                </>
-              ) : (
-                <>
-                  <FaPlus className="mr-2" /> Add Subject
-                </>
-              )}
+              {isSubmitting
+                ? "Submitting..."
+                : editSubject
+                  ? "Update Subject"
+                  : "Add Subject"}
             </button>
           </form>
         </div>
@@ -224,7 +210,7 @@ const SubjectManagement = () => {
             text-white border border-gray-700 focus:outline-none
             focus:ring-2 focus:ring-indigo-500"
           />
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y -1/2 text-gray-400" />
+          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
 
         {/* Subject List */}
@@ -251,34 +237,35 @@ const SubjectManagement = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-700">
-                {filteredSubjects.map((subject) => (
-                  <tr
-                    key={subject.id}
-                    className="hover:bg-gray-700 transition duration-300"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-white">
-                      {subject.subjectname}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-white">
-                      {subject.subjectcode}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleEdit(subject)}
-                        className="text-blue-400 hover:text-blue-300 mr-4 transition duration-300"
-                      >
-                        <FaEdit className="text-xl" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(subject.id)}
-                        className="text-red-400 hover:text-red-300 transition duration-300"
-                      >
-                        <FaTrash className="text-xl" />
-                      </button>
+              <tbody className="text-white">
+                {filteredSubjects.length > 0 ? (
+                  filteredSubjects.map((subject) => (
+                    <tr key={subject.id} className="hover:bg-gray-700">
+                      <td className="px-6 py-4">{subject.subjectname}</td>
+                      <td className="px-6 py-4">{subject.subjectcode}</td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => handleEdit(subject)}
+                          className="text-indigo-400 hover:text-indigo-500"
+                        >
+                          <FaEdit className="inline mr-2" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(subject.id)}
+                          className="text-red-500 hover:text-red-600 ml-4"
+                        >
+                          <FaTrash className="inline mr-2" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="px-6 py-4 text-center">
+                      No subjects found.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
