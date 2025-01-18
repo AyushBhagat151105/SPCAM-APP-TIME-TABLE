@@ -2,12 +2,20 @@
 
 import React, { useState } from "react";
 import { FaCalendarAlt, FaClock, FaPlus } from "react-icons/fa";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+import * as XLSX from "xlsx";
+
+interface SubjectMap {
+  BCA: Record<string, string[]>;
+  BBA: Record<string, string[]>;
+}
 
 interface TimetableData {
   [day: string]: {
     [time: string]: {
       [className: string]: {
-        faculty: string;
+        faculty: string[];
         subject: string;
       };
     };
@@ -21,6 +29,73 @@ interface TimetableManagementProps {
 const TimetableManagement: React.FC<TimetableManagementProps> = ({
   isAdmin,
 }) => {
+  // Comprehensive subject map
+  const subjectMap: SubjectMap = {
+    BCA: {
+      "BCA(A)-II": [
+        "OOP",
+        "OS",
+        "DBMS",
+        "DBMS(II)",
+        "SPM",
+        "SAD",
+        "IPD",
+        "DBMS-LAB",
+      ],
+      "BCA(B)-II": [
+        "OOP",
+        "OS",
+        "DBMS",
+        "DBMS(II)",
+        "SPM",
+        "SAD",
+        "IPD",
+        "DBMS-LAB",
+      ],
+      "BCA-IV": [
+        "Advanced JAVA",
+        "Software Engineering",
+        "Data Mining",
+        "Network Security",
+        "Cloud Computing",
+      ],
+      "BCA-VI": [
+        "Machine Learning",
+        "Artificial Intelligence",
+        "Blockchain",
+        "IoT",
+        "Big Data",
+      ],
+    },
+    BBA: {
+      "BBA(G)-IV": [
+        "Management",
+        "Accounting",
+        "Business Law",
+        "Economics",
+        "Marketing",
+      ],
+      "BBA(G)-VI": [
+        "Strategic Management",
+        "Financial Management",
+        "International Business",
+        "HR Management",
+      ],
+      "BBA(ISM)-IV": [
+        "Industrial Management",
+        "Supply Chain",
+        "Operations Research",
+        "Project Management",
+      ],
+      "BBA(ISM)-VI": [
+        "Entrepreneurship",
+        "Business Analytics",
+        "Corporate Governance",
+        "Digital Marketing",
+      ],
+    },
+  };
+
   const days = [
     "MONDAY",
     "TUESDAY",
@@ -29,6 +104,7 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
     "FRIDAY",
     "SATURDAY",
   ];
+
   const timeSlots = [
     "09:30 TO 10:25",
     "10:25 TO 11:20",
@@ -37,6 +113,7 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
     "01:45 TO 02:40",
     "02:40 TO 03:35",
   ];
+
   const classes = [
     "BCA(A)-II",
     "BCA(B)-II",
@@ -47,33 +124,23 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
     "BBA(ISM)-IV",
     "BBA(ISM)-VI",
   ];
-  const faculties = ["JD", "AR", "VS", "SP", "CP", "KG", "JP"];
-  const subjects = [
-    "DBMS",
-    "SAD",
-    "JAVA-LAB",
-    "OPP'S",
-    "C-PROGRAMMING",
-    "WAD",
-    "CS",
-    "ITF",
+
+  const faculties = [
+    "CP",
+    "JD",
+    "BP",
+    "NN",
+    "DK",
+    "SP",
+    "RR",
+    "KG",
+    "JT",
+    "RP",
+    "ST",
+    "ND",
   ];
 
-  const initialData: TimetableData = days.reduce((acc, day) => {
-    acc[day] = {};
-    return acc;
-  }, {} as TimetableData);
-
-  const [timetableData, setTimetableData] =
-    useState<TimetableData>(initialData);
-  const [formData, setFormData] = useState({
-    day: "",
-    time: "",
-    faculty: "",
-    subject: "",
-    lecture: "",
-  });
-
+  // Get color for day based on name
   const getColorForDay = (day: string): string => {
     const colors = {
       MONDAY: "bg-blue-600",
@@ -86,11 +153,51 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
     return colors[day as keyof typeof colors] || "bg-gray-700";
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
+  // Initialize timetable data
+  const initialData: TimetableData = days.reduce((acc, day) => {
+    acc[day] = {};
+    return acc;
+  }, {} as TimetableData);
+
+  // State management
+  const [timetableData, setTimetableData] =
+    useState<TimetableData>(initialData);
+  const [formData, setFormData] = useState({
+    day: "",
+    time: "",
+    faculty: "",
+    subject: "",
+    lecture: "",
+  });
+  const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
+
+  // Filter subjects based on selected lecture
+  const filterSubjects = (lecture: string) => {
+    if (lecture.startsWith("BCA")) {
+      const subjects = subjectMap.BCA[lecture] || [];
+      setAvailableSubjects(subjects);
+    } else if (lecture.startsWith("BBA")) {
+      const subjects = subjectMap.BBA[lecture] || [];
+      setAvailableSubjects(subjects);
+    } else {
+      setAvailableSubjects([]);
+    }
   };
 
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { id, value } = e.target;
+
+    // Special handling for lecture to filter subjects
+    if (id === "lecture") {
+      setFormData((prev) => ({ ...prev, [id]: value, subject: "" }));
+      filterSubjects(value);
+    } else {
+      setFormData((prev) => ({ ...prev, [id]: value }));
+    }
+  };
+
+  // Assign lecture to timetable
   const assignLecture = () => {
     const { day, time, faculty, subject, lecture } = formData;
 
@@ -105,17 +212,21 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
       updatedData[day][time] = {};
     }
 
+    // Check for faculty conflicts
     for (const className in updatedData[day][time]) {
-      if (updatedData[day][time][className]?.faculty === faculty) {
-        alert("Faculty cannot take their own lecture during this time slot.");
+      if (updatedData[day][time][className]?.faculty.includes(faculty)) {
+        alert(
+          "Faculty is already assigned to another class in this time slot.",
+        );
         return;
       }
     }
 
-    updatedData[day][time][lecture] = { faculty, subject };
+    // Assign lecture
+    updatedData[day][time][lecture] = { faculty: [faculty], subject };
     setTimetableData(updatedData);
 
-    // Reset form after assignment
+    // Reset form
     setFormData({
       day: "",
       time: "",
@@ -123,6 +234,65 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
       subject: "",
       lecture: "",
     });
+    setAvailableSubjects([]);
+  };
+
+  // Export to Excel functionality
+  const exportToExcel = () => {
+    try {
+      const worksheetData: string[][] = [
+        ["Time", ...classes],
+        ...days.flatMap((day) =>
+          timeSlots.map((time) => [
+            time,
+            ...classes.map((className) =>
+              timetableData[day]?.[time]?.[className]
+                ? `${timetableData[day][time][className].subject} (${timetableData[day][time][className].faculty.join(", ")})`
+                : "-",
+            ),
+          ]),
+        ),
+      ];
+
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Timetable");
+      XLSX.writeFile(workbook, "Timetable.xlsx");
+    } catch (error) {
+      console.error("Excel Export Error:", error);
+      alert("Failed to export timetable to Excel");
+    }
+  };
+
+  // Print to PDF functionality
+  const printToPDF = async () => {
+    try {
+      const table = document.querySelector("table");
+
+      if (!table) {
+        alert("Table not found");
+        return;
+      }
+
+      const canvas = await html2canvas(table, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+
+      const pdf = new jsPDF("l", "mm", "a4");
+      const imgData = canvas.toDataURL("image/png");
+      const imgProps = pdf.getImageProperties(imgData);
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("Timetable.pdf");
+    } catch (error) {
+      console.error("PDF Generation Error:", error);
+      alert("Failed to generate PDF");
+    }
   };
 
   return (
@@ -183,7 +353,7 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
                           className="px-6 py-4 whitespace-nowrap text-white"
                         >
                           {timetableData[day]?.[time]?.[className]
-                            ? `${timetableData[day][time][className].subject} (${timetableData[day][time][className].faculty})`
+                            ? `${timetableData[day][time][className].subject} (${timetableData[day][time][className].faculty.join(", ")})`
                             : "-"}
                         </td>
                       ))}
@@ -213,7 +383,7 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
                       id={id}
                       value={formData[id]}
                       onChange={handleInputChange}
-                      className=" p-3 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+                      className="p-3 rounded bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                     >
                       <option value="" disabled>
                         SELECT {id.toUpperCase()}
@@ -228,13 +398,13 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
                         faculties.map((faculty) => (
                           <option key={faculty}>{faculty}</option>
                         ))}
-                      {id === "subject" &&
-                        subjects.map((subject) => (
-                          <option key={subject}>{subject}</option>
-                        ))}
                       {id === "lecture" &&
                         classes.map((lecture) => (
                           <option key={lecture}>{lecture}</option>
+                        ))}
+                      {id === "subject" &&
+                        availableSubjects.map((subject) => (
+                          <option key={subject}>{subject}</option>
                         ))}
                     </select>
                   </div>
@@ -248,6 +418,20 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
             >
               Assign Lecture
             </button>
+            <div className="export-buttons mt-4">
+              <button
+                onClick={exportToExcel}
+                className="p-3 rounded bg-blue-600 text-gray-100 hover:bg-blue-500 transition focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
+              >
+                Export to Excel
+              </button>
+              <button
+                onClick={printToPDF}
+                className="p-3 mt-2 rounded bg-green-600 text-gray-100 hover:bg-green-500 transition focus:outline-none focus:ring-2 focus:ring-green-400 w-full"
+              >
+                Print to PDF
+              </button>
+            </div>
           </div>
         )}
       </div>
