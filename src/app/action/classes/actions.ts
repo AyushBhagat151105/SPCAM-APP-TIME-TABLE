@@ -127,3 +127,18 @@ export async function countClasses() {
     return { error: "Failed to fetch class count" };
   }
 }
+export async function getClasses() {
+  try {
+    const classes = await prisma.class.findMany();
+    return {
+      success: true,
+      classes,
+    };
+  } catch (error) {
+    console.error("Fetch classes error:", error);
+    return {
+      success: false,
+      error: "Failed to fetch classes",
+    };
+  }
+}

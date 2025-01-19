@@ -1,4 +1,3 @@
-// src/actions/subjectActions.ts
 "use server";
 
 import prisma from "@/lib/prisma";
@@ -9,6 +8,7 @@ import { z } from "zod"; // Recommended for validation
 const SubjectSchema = z.object({
   subjectname: z.string().min(1, "Subject name is required"),
   subjectcode: z.string().min(1, "Subject code is required"),
+  classId: z.string().optional(),
 });
 
 // Create a new subject
@@ -18,6 +18,7 @@ export async function createSubject(formData: FormData) {
     const validatedFields = SubjectSchema.parse({
       subjectname: formData.get("subjectname"),
       subjectcode: formData.get("subjectcode"),
+      classId: formData.get("classId"),
     });
 
     // Create subject
@@ -57,6 +58,7 @@ export async function updateSubject(id: string, formData: FormData) {
     const validatedFields = SubjectSchema.parse({
       subjectname: formData.get("subjectname"),
       subjectcode: formData.get("subjectcode"),
+      classId: formData.get("classId"),
     });
 
     // Update subject

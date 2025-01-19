@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,17 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// prisma/schema.prisma
-
-// prisma/schema.prisma
-
 model Stream {
   id         String    @id @default(cuid())
   streamName String
   streamcode String    @unique
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
-  subjects   Subject[] @relation("StreamSubjects")
   teachers   Teacher[] @relation("TeacherStreams")
 }
 
@@ -42,8 +35,8 @@ model Subject {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   Timetable   Timetable[] // One subject can appear in many timetables
-  streamId    String?
-  stream      Stream?     @relation("StreamSubjects", fields: [streamId], references: [id])
+  classId     String?
+  class       Class?      @relation(fields: [classId], references: [id])
 }
 
 model Class {
@@ -53,6 +46,7 @@ model Class {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   Timetable Timetable[] // One class can have many timetables
+  subjects  Subject[]   @relation
 }
 
 model User {
@@ -79,15 +73,13 @@ model User {
 model Timetable {
   id        String   @id @default(cuid())
   day       String
-  period    String
   subject   Subject  @relation(fields: [subjectId], references: [id])
   subjectId String
   class     Class    @relation(fields: [classId], references: [id])
   classId   String
   teacher   Teacher  @relation(fields: [teacherId], references: [id])
   teacherId String
-  starttime DateTime
-  endtime   DateTime
+  time      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

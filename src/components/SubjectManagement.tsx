@@ -8,19 +8,28 @@ import {
   getSubjects,
   updateSubject,
 } from "@/app/action/subject/action";
+import { getClasses } from "@/app/action/classes/actions";
 
 type Subject = {
   id: string;
   subjectname: string;
   subjectcode: string;
+  classId?: string;
+};
+
+type Class = {
+  id: string;
+  classname: string;
 };
 
 const SubjectManagement = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [editSubject, setEditSubject] = useState<Subject | null>(null);
   const [subjectData, setSubjectData] = useState({
     subjectname: "",
     subjectcode: "",
+    classId: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -37,14 +46,26 @@ const SubjectManagement = () => {
     }
   };
 
+  // Fetch classes from the backend
+  const fetchClasses = async () => {
+    const response = await getClasses();
+    if (response.success && Array.isArray(response.classes)) {
+      setClasses(response.classes);
+    } else {
+      console.error(response.error);
+      alert(response.error || "Failed to fetch classes.");
+    }
+  };
+
   useEffect(() => {
     fetchSubjects();
+    fetchClasses();
   }, []);
 
   // Handle input changes with explicit type casting
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    field: "subjectname" | "subjectcode",
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    field: "subjectname" | "subjectcode" | "classId",
   ) => {
     setSubjectData({
       ...subjectData,
@@ -73,6 +94,7 @@ const SubjectManagement = () => {
       const formData = new FormData();
       formData.append("subjectname", subjectData.subjectname);
       formData.append("subjectcode", subjectData.subjectcode);
+      formData.append("classId", subjectData.classId);
 
       if (editSubject) {
         response = await updateSubject(editSubject.id, formData);
@@ -83,7 +105,7 @@ const SubjectManagement = () => {
       if (response.success) {
         alert(`Subject ${editSubject ? "updated" : "added"} successfully`);
         setEditSubject(null);
-        setSubjectData({ subjectname: "", subjectcode: "" });
+        setSubjectData({ subjectname: "", subjectcode: "", classId: "" });
         fetchSubjects();
       } else {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -117,6 +139,7 @@ const SubjectManagement = () => {
     setSubjectData({
       subjectname: subject.subjectname,
       subjectcode: subject.subjectcode,
+      classId: subject.classId || "",
     });
   };
 
@@ -182,6 +205,25 @@ const SubjectManagement = () => {
               )}
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Class
+              </label>
+              <select
+                value={subjectData.classId}
+                onChange={(e) => handleInputChange(e, "classId")}
+                className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white
+                border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">Select a class</option>
+                {classes.map((cls) => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.classname}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <button
               type="submit"
               disabled={isSubmitting}
@@ -233,6 +275,9 @@ const SubjectManagement = () => {
                     Subject Code
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Class
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -243,6 +288,10 @@ const SubjectManagement = () => {
                     <tr key={subject.id} className="hover:bg-gray-700">
                       <td className="px-6 py-4">{subject.subjectname}</td>
                       <td className="px-6 py-4">{subject.subjectcode}</td>
+                      <td className="px-6 py-4">
+                        {classes.find((cls) => cls.id === subject.classId)
+                          ?.classname || "N/A"}
+                      </td>
                       <td className="px-6 py-4">
                         <button
                           onClick={() => handleEdit(subject)}
@@ -261,7 +310,7 @@ const SubjectManagement = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-6 py-4 text-center">
+                    <td colSpan={4} className="px-6 py-4 text-center">
                       No subjects found.
                     </td>
                   </tr>
