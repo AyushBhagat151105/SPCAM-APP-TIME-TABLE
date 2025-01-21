@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaCalendarAlt, FaClock, FaPlus } from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaPlus, FaTrash } from "react-icons/fa";
 import {
   getClasses,
   getFaculties,
@@ -10,6 +10,7 @@ import {
 import {
   addTimetableEntry,
   getTimetableData,
+  deleteTimetableEntry,
 } from "@/app/action/timetableAction/action";
 
 interface TimetableData {
@@ -18,6 +19,7 @@ interface TimetableData {
       [className: string]: {
         faculty: string[];
         subject: string;
+        id: string;
       };
     };
   };
@@ -98,8 +100,22 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
       setTimetableData(updatedData);
       setFormData({ day: "", time: "", faculty: "", subject: "", lecture: "" });
       setAvailableSubjects([]);
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("An unknown error occurred.");
+      }
+    }
+  };
+
+  const deleteLecture = async (id: string) => {
+    try {
+      await deleteTimetableEntry(id);
+      const updatedData = await getTimetableData();
+      setTimetableData(updatedData);
     } catch {
-      alert("Failed to assign lecture");
+      alert("Failed to delete lecture");
     }
   };
 
@@ -193,9 +209,36 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
                           key={cls.id}
                           className="px-6 py-4 whitespace-nowrap text-white"
                         >
-                          {timetableData[day]?.[time]?.[cls.classname]
-                            ? `${timetableData[day][time][cls.classname].subject} (${timetableData[day][time][cls.classname].faculty.join(", ")})`
-                            : "-"}
+                          {timetableData[day]?.[time]?.[cls.classname] ? (
+                            <div className="flex items-center justify-between">
+                              <span>
+                                {
+                                  timetableData[day][time][cls.classname]
+                                    .subject
+                                }{" "}
+                                (
+                                {timetableData[day][time][
+                                  cls.classname
+                                ].faculty.join(", ")}
+                                )
+                              </span>
+                              {isAdmin && (
+                                <button
+                                  onClick={() =>
+                                    deleteLecture(
+                                      timetableData[day][time][cls.classname]
+                                        .id,
+                                    )
+                                  }
+                                  className="text-red-500 hover:text-red-600 ml-4"
+                                >
+                                  <FaTrash />
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            "-"
+                          )}
                         </td>
                       ))}
                     </tr>

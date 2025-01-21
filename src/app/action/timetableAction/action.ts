@@ -13,13 +13,14 @@ export const getTimetableData = async () => {
 
   const timetableData = timetables.reduce(
     (acc, timetable) => {
-      const { day, time, class: classData, teacher, subject } = timetable;
+      const { id, day, time, class: classData, teacher, subject } = timetable;
       if (!acc[day]) acc[day] = {};
       if (!acc[day][time]) acc[day][time] = {};
       if (!acc[day][time][classData.classname]) {
         acc[day][time][classData.classname] = {
           faculty: [],
           subject: subject.subjectname,
+          id: id,
         };
       }
       acc[day][time][classData.classname].faculty.push(teacher.teachername);
@@ -27,13 +28,15 @@ export const getTimetableData = async () => {
     },
     {} as Record<
       string,
-      Record<string, Record<string, { faculty: string[]; subject: string }>>
+      Record<
+        string,
+        Record<string, { faculty: string[]; subject: string; id: string }>
+      >
     >,
   );
 
   return timetableData;
 };
-
 export const addTimetableEntry = async (entry: {
   day: string;
   time: string;
@@ -54,6 +57,20 @@ export const addTimetableEntry = async (entry: {
   }
 
   const { day, time, faculty, subject, lecture } = entry;
+
+  const existingEntry = await prisma.timetable.findFirst({
+    where: {
+      day,
+      time,
+      teacherId: faculty,
+    },
+  });
+
+  if (existingEntry) {
+    throw new Error(
+      "Teacher is already assigned to another class at this time.",
+    );
+  }
 
   const teacher = await prisma.teacher.findUnique({
     where: { id: faculty },
