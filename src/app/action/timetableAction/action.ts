@@ -56,16 +56,26 @@ export const addTimetableEntry = async (entry: {
   const { day, time, faculty, subject, lecture } = entry;
 
   const teacher = await prisma.teacher.findUnique({
-    where: { teachercode: faculty },
+    where: { id: faculty },
   });
 
   const subjectData = await prisma.subject.findUnique({
-    where: { subjectcode: subject },
+    where: { id: subject },
   });
 
   const classData = await prisma.class.findUnique({
-    where: { classroom: lecture },
+    where: { id: lecture },
   });
+
+  if (!teacher) {
+    console.error(`Teacher not found for id: ${faculty}`);
+  }
+  if (!subjectData) {
+    console.error(`Subject not found for id: ${subject}`);
+  }
+  if (!classData) {
+    console.error(`Class not found for id: ${lecture}`);
+  }
 
   if (!teacher || !subjectData || !classData) {
     throw new Error("Invalid data provided");
@@ -79,5 +89,15 @@ export const addTimetableEntry = async (entry: {
       subjectId: subjectData.id,
       classId: classData.id,
     },
+  });
+};
+
+export const deleteTimetableEntry = async (id: string) => {
+  if (!id) {
+    throw new Error("Invalid ID provided");
+  }
+
+  await prisma.timetable.delete({
+    where: { id },
   });
 };

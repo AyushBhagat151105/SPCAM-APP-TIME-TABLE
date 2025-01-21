@@ -38,9 +38,15 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
     subject: "",
     lecture: "",
   });
-  const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
-  const [classes, setClasses] = useState<string[]>([]);
-  const [faculties, setFaculties] = useState<string[]>([]);
+  const [availableSubjects, setAvailableSubjects] = useState<
+    { id: string; subjectname: string }[]
+  >([]);
+  const [classes, setClasses] = useState<{ id: string; classname: string }[]>(
+    [],
+  );
+  const [faculties, setFaculties] = useState<
+    { id: string; teachername: string }[]
+  >([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -51,48 +57,22 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
         getFaculties(),
       ]);
       setTimetableData(timetable);
-      setClasses(classData.map((cls: { classname: string }) => cls.classname));
-      setFaculties(
-        facultyData.map((fac: { teachername: string }) => fac.teachername),
-      );
+      setClasses(classData);
+      setFaculties(facultyData);
     };
     fetchData().catch(console.error);
   }, []);
 
   const fetchSubjects = async (classId: string) => {
     setLoading(true);
-    const subjectData = await getSubjects(classId);
-    setAvailableSubjects(subjectData.map((subject) => subject.subjectname));
-    setLoading(false);
-  };
-
-  const days = [
-    "MONDAY",
-    "TUESDAY",
-    "WEDNESDAY",
-    "THURSDAY",
-    "FRIDAY",
-    "SATURDAY",
-  ];
-  const timeSlots = [
-    "09:30 TO 10:25",
-    "10:25 TO 11:20",
-    "11:20 TO 12:15",
-    "12:50 TO 01:45",
-    "01:45 TO 02:40",
-    "02:40 TO 03:35",
-  ];
-
-  const getColorForDay = (day: string): string => {
-    const colors = {
-      MONDAY: "bg-blue-600",
-      TUESDAY: "bg-green-600",
-      WEDNESDAY: "bg-red-600",
-      THURSDAY: "bg-purple-600",
-      FRIDAY: "bg-indigo-600",
-      SATURDAY: "bg-yellow-600",
-    };
-    return colors[day as keyof typeof colors] || "bg-gray-700";
+    try {
+      const subjectData = await getSubjects(classId);
+      setAvailableSubjects(subjectData);
+    } catch (error) {
+      console.error("Failed to fetch subjects", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -131,6 +111,35 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
     // Implement print to PDF logic here
   };
 
+  const days = [
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY",
+  ];
+  const timeSlots = [
+    "09:30 TO 10:25",
+    "10:25 TO 11:20",
+    "11:20 TO 12:15",
+    "12:50 TO 01:45",
+    "01:45 TO 02:40",
+    "02:40 TO 03:35",
+  ];
+
+  const getColorForDay = (day: string): string => {
+    const colors = {
+      MONDAY: "bg-blue-600",
+      TUESDAY: "bg-green-600",
+      WEDNESDAY: "bg-red-600",
+      THURSDAY: "bg-purple-600",
+      FRIDAY: "bg-indigo-600",
+      SATURDAY: "bg-yellow-600",
+    };
+    return colors[day as keyof typeof colors] || "bg-gray-700";
+  };
+
   return (
     <div className="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen py-12 px-4">
       <div className="container max-w-full sm:max-w-7xl mx-auto">
@@ -153,12 +162,12 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                   TIME
                 </th>
-                {classes.map((className) => (
+                {classes.map((cls) => (
                   <th
-                    key={className}
+                    key={cls.id}
                     className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider"
                   >
-                    {className}
+                    {cls.classname}
                   </th>
                 ))}
               </tr>
@@ -179,13 +188,13 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
                       <td className="px-6 py-4 whitespace-nowrap text-white">
                         {time}
                       </td>
-                      {classes.map((className) => (
+                      {classes.map((cls) => (
                         <td
-                          key={className}
+                          key={cls.id}
                           className="px-6 py-4 whitespace-nowrap text-white"
                         >
-                          {timetableData[day]?.[time]?.[className]
-                            ? `${timetableData[day][time][className].subject} (${timetableData[day][time][className].faculty.join(", ")})`
+                          {timetableData[day]?.[time]?.[cls.classname]
+                            ? `${timetableData[day][time][cls.classname].subject} (${timetableData[day][time][cls.classname].faculty.join(", ")})`
                             : "-"}
                         </td>
                       ))}
@@ -225,15 +234,21 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
                         ))}
                       {id === "faculty" &&
                         faculties.map((faculty) => (
-                          <option key={faculty}>{faculty}</option>
+                          <option key={faculty.id} value={faculty.id}>
+                            {faculty.teachername}
+                          </option>
                         ))}
                       {id === "lecture" &&
-                        classes.map((lecture) => (
-                          <option key={lecture}>{lecture}</option>
+                        classes.map((cls) => (
+                          <option key={cls.id} value={cls.id}>
+                            {cls.classname}
+                          </option>
                         ))}
                       {id === "subject" &&
                         availableSubjects.map((subject) => (
-                          <option key={subject}>{subject}</option>
+                          <option key={subject.id} value={subject.id}>
+                            {subject.subjectname}
+                          </option>
                         ))}
                     </select>
                   </div>
@@ -243,7 +258,7 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
             {loading && <p className="text-white">Loading subjects...</p>}
             <button
               onClick={assignLecture}
-              className="p-3 mt-6 rounded bg-orange-600 text-gray-100 hover:bg-orange-500 transition focus:outline-none focus:ring-2 focus:ring -orange-400 w-full"
+              className="p-3 mt-6 rounded bg-orange-600 text-gray-100 hover:bg-orange-500 transition focus:outline-none focus:ring-2 focus:ring-orange-400 w-full"
             >
               Assign Lecture
             </button>

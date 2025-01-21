@@ -14,7 +14,7 @@ type Subject = {
   id: string;
   subjectname: string;
   subjectcode: string;
-  classId?: string;
+  classId?: string | null;
 };
 
 type Class = {
