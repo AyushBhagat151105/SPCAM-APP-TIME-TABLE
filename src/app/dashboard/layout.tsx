@@ -89,7 +89,7 @@ export default async function Layout({
             <FaHome className="text-indigo-400" />
             <span className="text-sm">
               © {new Date().getFullYear()} Sardar Patel College of
-              Administration & Management
+              Administration & Management Developed by Ayush Bhagat and its team
             </span>
           </div>
         </footer>
