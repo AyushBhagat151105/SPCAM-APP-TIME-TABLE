@@ -12,6 +12,8 @@ import {
   getTimetableData,
   deleteTimetableEntry,
 } from "@/app/action/timetableAction/action";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import "jspdf-autotable";
 
 interface TimetableData {
   [day: string]: {
@@ -119,14 +121,6 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
     }
   };
 
-  const exportToExcel = () => {
-    // Implement export to Excel logic here
-  };
-
-  const printToPDF = async () => {
-    // Implement print to PDF logic here
-  };
-
   const days = [
     "MONDAY",
     "TUESDAY",
@@ -134,7 +128,200 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
     "THURSDAY",
     "FRIDAY",
     "SATURDAY",
+    "SUNDAY",
   ];
+
+  const printToPDF = async () => {
+    try {
+      const pdfDoc = await PDFDocument.create();
+      const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+
+      const title = "SPCAM Class Schedule";
+
+      // Define consistent styling
+      const COLORS = {
+        BACKGROUND: rgb(0.95, 0.95, 0.95),
+        TEXT: rgb(0, 0, 0),
+        HEADER_BACKGROUND: rgb(0.8, 0.8, 0.8),
+        CELL_BACKGROUND: rgb(0.9, 0.9, 0.9),
+      };
+
+      const SIZES = {
+        MARGIN: 40,
+        TITLE_FONT_SIZE: 18,
+        HEADER_FONT_SIZE: 12,
+        CELL_FONT_SIZE: 10,
+        ROW_HEIGHT: 30,
+        CELL_PADDING: 5,
+      };
+
+      // Create multiple pages if needed
+      const createPage = (pdfDoc: PDFDocument) => {
+        const page = pdfDoc.addPage();
+        const { width, height } = page.getSize();
+        return { page, width, height };
+      };
+
+      let { page, width, height } = createPage(pdfDoc);
+      let currentY = height - SIZES.MARGIN;
+
+      // Title rendering
+      const drawTitle = () => {
+        const titleWidth = timesRomanFont.widthOfTextAtSize(
+          title,
+          SIZES.TITLE_FONT_SIZE,
+        );
+        page.drawText(title, {
+          x: (width - titleWidth) / 2,
+          y: currentY,
+          size: SIZES.TITLE_FONT_SIZE,
+          font: timesRomanFont,
+          color: COLORS.TEXT,
+        });
+        currentY -= SIZES.TITLE_FONT_SIZE + SIZES.MARGIN / 2;
+      };
+
+      // Calculate column widths
+      const calculateColumnWidths = () => {
+        const totalColumns = classes.length + 1;
+        const cellWidth = (width - 2 * SIZES.MARGIN) / totalColumns;
+        return { cellWidth, totalColumns };
+      };
+
+      // Draw table headers
+      const drawTableHeaders = (cellWidth: number) => {
+        const columns = ["TIME", ...classes.map((cls) => cls.classname)];
+
+        columns.forEach((col, index) => {
+          const headerX = SIZES.MARGIN + index * cellWidth;
+
+          // Header background
+          page.drawRectangle({
+            x: headerX,
+            y: currentY - SIZES.ROW_HEIGHT,
+            width: cellWidth,
+            height: SIZES.ROW_HEIGHT,
+            color: COLORS.HEADER_BACKGROUND,
+          });
+
+          // Header text
+          page.drawText(col, {
+            x: headerX + SIZES.CELL_PADDING,
+            y: currentY - SIZES.ROW_HEIGHT + SIZES.CELL_PADDING,
+            size: SIZES.HEADER_FONT_SIZE,
+            font: timesRomanFont,
+            color: COLORS.TEXT,
+          });
+        });
+
+        currentY -= SIZES.ROW_HEIGHT + SIZES.CELL_PADDING;
+      };
+
+      // Draw day rows
+      const drawDayRows = (cellWidth: number) => {
+        days.forEach((day) => {
+          // Day row background
+          page.drawRectangle({
+            x: SIZES.MARGIN,
+            y: currentY - SIZES.ROW_HEIGHT,
+            width: width - 2 * SIZES.MARGIN,
+            height: SIZES.ROW_HEIGHT,
+            color: COLORS.HEADER_BACKGROUND,
+          });
+
+          // Day text
+          const dayWidth = timesRomanFont.widthOfTextAtSize(
+            day,
+            SIZES.HEADER_FONT_SIZE,
+          );
+          page.drawText(day, {
+            x: (width - dayWidth) / 2,
+            y: currentY - SIZES.ROW_HEIGHT + SIZES.CELL_PADDING,
+            size: SIZES.HEADER_FONT_SIZE,
+            font: timesRomanFont,
+            color: COLORS.TEXT,
+          });
+
+          currentY -= SIZES.ROW_HEIGHT + SIZES.CELL_PADDING;
+
+          // Time slots rendering
+          timeSlots.forEach((time) => {
+            const columns = ["TIME", ...classes.map((cls) => cls.classname)];
+
+            columns.forEach((col, colIndex) => {
+              const cellX = SIZES.MARGIN + colIndex * cellWidth;
+
+              // Cell background
+              page.drawRectangle({
+                x: cellX,
+                y: currentY - SIZES.ROW_HEIGHT,
+                width: cellWidth,
+                height: SIZES.ROW_HEIGHT,
+                color:
+                  colIndex % 2 === 0
+                    ? COLORS.BACKGROUND
+                    : COLORS.CELL_BACKGROUND,
+              });
+
+              // Cell content
+              const cellText =
+                colIndex === 0
+                  ? time
+                  : formatCellContent(timetableData, day, time, col);
+
+              page.drawText(cellText, {
+                x: cellX + SIZES.CELL_PADDING,
+                y: currentY - SIZES.ROW_HEIGHT + SIZES.CELL_PADDING,
+                size: SIZES.CELL_FONT_SIZE,
+                font: timesRomanFont,
+                color: COLORS.TEXT,
+              });
+            });
+
+            currentY -= SIZES.ROW_HEIGHT;
+
+            // Create new page if space is exhausted
+            if (currentY < SIZES.MARGIN) {
+              ({ page, width, height } = createPage(pdfDoc));
+              currentY = height - SIZES.MARGIN;
+              drawTitle();
+              const { cellWidth } = calculateColumnWidths();
+              drawTableHeaders(cellWidth);
+            }
+          });
+        });
+      };
+
+      // Main PDF generation flow
+      drawTitle();
+      const { cellWidth } = calculateColumnWidths();
+      drawTableHeaders(cellWidth);
+      drawDayRows(cellWidth);
+
+      // Save and download PDF
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "Class_Schedule.pdf";
+      link.click();
+    } catch (error) {
+      console.error("PDF Generation Error:", error);
+      alert("Failed to generate PDF. Please try again.");
+    }
+  };
+
+  // Helper function for cell content
+  const formatCellContent = (
+    timetableData: TimetableData,
+    day: string,
+    time: string,
+    className: string,
+  ) => {
+    const entry = timetableData[day]?.[time]?.[className];
+    return entry ? `${entry.subject} (${entry.faculty.join(", ")})` : "-";
+  };
+
   const timeSlots = [
     "09:30 TO 10:25",
     "10:25 TO 11:20",
@@ -165,7 +352,10 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
             Timetable Management
           </h1>
         </div>
-        <div className="bg-gray-800 shadow-xl rounded-lg overflow-x-auto mb-10">
+        <div
+          id="timetable"
+          className="bg-gray-800 shadow-xl rounded-lg overflow-x-auto mb-10"
+        >
           <div className="px-6 py-4 bg-gray-700">
             <h2 className="text-2xl font-semibold text-white flex items-center">
               <FaClock className="mr-3 text-indigo-400" />
@@ -306,12 +496,6 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
               Assign Lecture
             </button>
             <div className="export-buttons mt-4">
-              <button
-                onClick={exportToExcel}
-                className="p-3 rounded bg-blue-600 text-gray-100 hover:bg-blue-500 transition focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
-              >
-                Export to Excel
-              </button>
               <button
                 onClick={printToPDF}
                 className="p-3 mt-2 rounded bg-green-600 text-gray-100 hover:bg-green-500 transition focus:outline-none focus:ring-2 focus:ring-green-400 w-full"
