@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import {ThemeProvider} from "next-themes";
+import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/toaster";
+import ClientProvider from "@/components/ClientProvider";
 
 export const metadata: Metadata = {
   title: "SPCAM",
@@ -13,20 +15,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <>
-          <html lang="en" suppressHydrationWarning>
-          <head />
-          <body>
+    <>
+      <html lang="en" suppressHydrationWarning>
+        <head />
+        <body>
           <ThemeProvider
-              attribute="class"
-              defaultTheme="dark"
-              enableSystem
-              disableTransitionOnChange
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
           >
+            <ClientProvider>
               {children}
+              <Toaster />
+            </ClientProvider>
           </ThemeProvider>
-          </body>
-          </html>
-      </>
+        </body>
+      </html>
+    </>
   );
 }
