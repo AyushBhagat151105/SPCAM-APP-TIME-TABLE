@@ -14,6 +14,7 @@ import {
   fetchClasses,
   updateClass,
 } from "@/app/action/classes/actions";
+import { toast } from "@/hooks/use-toast";
 
 // Define a type for the errors state
 type Errors = {
@@ -45,7 +46,10 @@ const ClassManagement = () => {
       setClasses(data);
     } catch (error) {
       console.error("Error fetching classes:", error);
-      alert("Failed to load classes.");
+      toast({
+        title: "Failed to load classes.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -76,12 +80,16 @@ const ClassManagement = () => {
         return;
       }
 
-      alert(response.message);
+      toast({
+        title: response.message,
+      });
       setEditClass(null);
       setClassData({ classname: "", classroom: "" });
       loadClasses();
     } catch {
-      alert("An error occurred. Please try again.");
+      toast({
+        title: "An error occurred. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -95,14 +103,21 @@ const ClassManagement = () => {
       const response = await deleteClass(id);
 
       if (!response.success) {
-        alert(response.message);
+        toast({
+          title: response.message,
+        });
         return;
       }
 
-      alert(response.message);
+      toast({
+        title: response.message,
+      });
       loadClasses();
     } catch {
-      alert("Failed to delete class.");
+      toast({
+        title: "Failed to delete class.",
+        variant: "destructive",
+      });
     }
   };
 

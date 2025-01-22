@@ -9,6 +9,7 @@ import {
   updateSubject,
 } from "@/app/action/subject/action";
 import { getClasses } from "@/app/action/classes/actions";
+import { toast } from "@/hooks/use-toast";
 
 type Subject = {
   id: string;
@@ -42,7 +43,10 @@ const SubjectManagement = () => {
       setSubjects(response.subjects);
     } else {
       console.error(response.error);
-      alert(response.error || "Failed to fetch subjects.");
+      toast({
+        variant: "destructive",
+        title: response.error || "Failed to fetch subjects.",
+      });
     }
   };
 
@@ -53,7 +57,10 @@ const SubjectManagement = () => {
       setClasses(response.classes);
     } else {
       console.error(response.error);
-      alert(response.error || "Failed to fetch classes.");
+      toast({
+        variant: "destructive",
+        title: response.error || "Failed to fetch classes.",
+      });
     }
   };
 
@@ -103,7 +110,9 @@ const SubjectManagement = () => {
       }
 
       if (response.success) {
-        alert(`Subject ${editSubject ? "updated" : "added"} successfully`);
+        toast({
+          title: `Subject ${editSubject ? "updated" : "added"} successfully`,
+        });
         setEditSubject(null);
         setSubjectData({ subjectname: "", subjectcode: "", classId: "" });
         fetchSubjects();
@@ -114,7 +123,10 @@ const SubjectManagement = () => {
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("Failed to save subject. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Failed to save subject. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -126,10 +138,15 @@ const SubjectManagement = () => {
 
     const response = await deleteSubject(id);
     if (response.success) {
-      alert("Subject deleted successfully.");
+      toast({
+        title: "Subject deleted successfully.",
+      });
       fetchSubjects();
     } else {
-      alert(response.error || "Failed to delete subject.");
+      toast({
+        variant: "destructive",
+        title: response.error || "Failed to delete subject.",
+      });
     }
   };
 

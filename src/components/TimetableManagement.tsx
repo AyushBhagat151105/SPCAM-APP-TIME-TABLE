@@ -14,6 +14,7 @@ import {
 } from "@/app/action/timetableAction/action";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import "jspdf-autotable";
+import { toast } from "@/hooks/use-toast";
 
 interface TimetableData {
   [day: string]: {
@@ -74,6 +75,10 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
       setAvailableSubjects(subjectData);
     } catch (error) {
       console.error("Failed to fetch subjects", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to fetch subjects",
+      });
     } finally {
       setLoading(false);
     }
@@ -92,7 +97,10 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
   const assignLecture = async () => {
     const { day, time, faculty, subject, lecture } = formData;
     if (!day || !time || !faculty || !subject || !lecture) {
-      alert("Please fill all fields.");
+      toast({
+        title: "Please fill all fields.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -104,9 +112,14 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
       setAvailableSubjects([]);
     } catch (error) {
       if (error instanceof Error) {
-        alert(error.message);
+        toast({
+          variant: "destructive",
+          title: error.message,
+        });
       } else {
-        alert("An unknown error occurred.");
+        toast({
+          title: "An unknown error occurred.",
+        });
       }
     }
   };
@@ -117,7 +130,10 @@ const TimetableManagement: React.FC<TimetableManagementProps> = ({
       const updatedData = await getTimetableData();
       setTimetableData(updatedData);
     } catch {
-      alert("Failed to delete lecture");
+      toast({
+        title: "Failed to delete lecture",
+        variant: "destructive",
+      });
     }
   };
 
