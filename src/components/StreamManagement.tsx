@@ -7,6 +7,7 @@ import {
   getStreams,
   updateStream,
 } from "@/app/action/stream/action";
+import { toast } from "@/hooks/use-toast";
 
 // Define the Stream type
 type Stream = {
@@ -41,11 +42,17 @@ const StreamManagement = () => {
         setStreams(result.streams);
       } else {
         console.error("Error fetching streams:", result.error);
-        alert(`Error fetching streams: ${result.error || "Unknown error"}`);
+        toast({
+          variant: "destructive",
+          title: `Error fetching streams: ${result.error || "Unknown error"}`,
+        });
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("An error occurred while fetching streams.");
+      toast({
+        variant: "destructive",
+        title: "An error occurred while fetching streams.",
+      });
     }
   };
 
@@ -87,16 +94,23 @@ const StreamManagement = () => {
       }
 
       if (result.success) {
-        alert(`Stream ${editStream ? "updated" : "added"} successfully.`);
+        toast({
+          title: `Stream ${editStream ? "updated" : "added"} successfully.`,
+        });
         setEditStream(null);
         setStreamData({ streamName: "", streamcode: "" });
         fetchStreams();
       } else {
-        alert(`Error: ${result.error || "Failed to save stream."}`);
+        toast({
+          variant: "destructive",
+          title: `Error: ${result.error || "Failed to save stream."}`,
+        });
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("An error occurred during submission.");
+      toast({
+        title: "An error occurred during submission.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -118,14 +132,22 @@ const StreamManagement = () => {
     try {
       const result = await deleteStream(id);
       if (result.success) {
-        alert("Stream deleted successfully.");
+        toast({
+          title: "Stream deleted successfully.",
+        });
         fetchStreams();
       } else {
-        alert(`Error: ${result.error || "Failed to delete stream."}`);
+        toast({
+          variant: "destructive",
+          title: `Error: ${result.error || "Failed to delete stream."}`,
+        });
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("An error occurred while deleting the stream.");
+      toast({
+        variant: "destructive",
+        title: "An error occurred while deleting the stream.",
+      });
     }
   };
 

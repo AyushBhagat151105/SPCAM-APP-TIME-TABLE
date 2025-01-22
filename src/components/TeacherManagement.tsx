@@ -17,6 +17,7 @@ import {
 } from "@/app/action/teacher/action";
 import { getStreams } from "@/app/action/stream/action";
 import { getUsers } from "@/app/action/user/action";
+import { toast } from "@/hooks/use-toast";
 
 type Teacher = {
   id: string;
@@ -77,9 +78,10 @@ const TeacherManagement = () => {
       setTeachers(teachersData);
     } catch (error) {
       console.error("Error fetching teachers:", error);
-      alert(
-        `Error fetching teachers: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      toast({
+        variant: "destructive",
+        title: `Error fetching teachers: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
     }
   };
 
@@ -93,9 +95,10 @@ const TeacherManagement = () => {
       setUsers(result.data);
     } catch (error) {
       console.error("Error fetching users:", error);
-      alert(
-        `Error fetching users: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      toast({
+        variant: "destructive",
+        title: `Error fetching users: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
     }
   };
 
@@ -109,9 +112,10 @@ const TeacherManagement = () => {
       setStreams(result.streams);
     } catch (error) {
       console.error("Error fetching streams:", error);
-      alert(
-        `Error fetching streams: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      toast({
+        variant: "destructive",
+        title: `Error fetching streams: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
     }
   };
 
@@ -149,7 +153,9 @@ const TeacherManagement = () => {
         throw new Error(result.error);
       }
 
-      alert(`Teacher ${editTeacher ? "updated" : "added"} successfully`);
+      toast({
+        title: `Teacher ${editTeacher ? "updated" : "added"} successfully`,
+      });
       setEditTeacher(null);
       setTeacherData({
         teachername: "",
@@ -159,9 +165,10 @@ const TeacherManagement = () => {
       });
       fetchTeachers();
     } catch (error) {
-      alert(
-        `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      toast({
+        variant: "destructive",
+        title: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -188,12 +195,15 @@ const TeacherManagement = () => {
         throw new Error(result.error);
       }
 
-      alert("Teacher deleted successfully.");
+      toast({
+        title: "Teacher deleted successfully.",
+      });
       fetchTeachers();
     } catch (error) {
-      alert(
-        `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      toast({
+        variant: "destructive",
+        title: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
     }
   };
 
