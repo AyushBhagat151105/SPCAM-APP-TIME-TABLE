@@ -15,6 +15,7 @@ import {
 } from "react-icons/md";
 import { BsTable } from "react-icons/bs";
 import { FaStream, FaSignOutAlt } from "react-icons/fa";
+import { RiCodeView } from "react-icons/ri";
 
 const menuItems = [
   {
@@ -71,6 +72,12 @@ const menuItems = [
         icon: AiOutlineUser,
         label: "Profile",
         href: "/profile",
+        visible: ["admin", "user"],
+      },
+      {
+        icon: RiCodeView,
+        label: "Developers",
+        href: "/dashboard/list/dev",
         visible: ["admin", "user"],
       },
       {
