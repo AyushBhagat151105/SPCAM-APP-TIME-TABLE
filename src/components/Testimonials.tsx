@@ -21,7 +21,7 @@ const Testimonials = () => {
     {
       quote:
         "Its robust backend architecture truly stands out, simplifying my tasks and making development more efficient.",
-      name: "Monik Pate",
+      name: "Monik Patel",
       designation: "Backend Engineer at Research Lab",
       src: "/monik.jpg",
     },
@@ -49,7 +49,7 @@ const Testimonials = () => {
     {
       quote:
         "The frontend framework is intuitive and flexible, making development faster and smoother for us.",
-      name: "Niraj Pate",
+      name: "Niraj Patel",
       designation: "Frontend Developer at Research Lab",
       src: "/niraj.jpg",
     },
