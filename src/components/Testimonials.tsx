@@ -81,7 +81,7 @@ const Testimonials = () => {
             SPCAM&#39;s Research lab team
           </p>
         </div>
-        <AnimatedTestimonials testimonials={testimonials} />
+        <AnimatedTestimonials testimonials={testimonials} autoplay={true} />
       </div>
     </>
   );
