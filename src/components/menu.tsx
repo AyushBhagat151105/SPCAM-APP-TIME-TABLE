@@ -68,12 +68,12 @@ const menuItems = [
   {
     title: "PERSONAL",
     items: [
-      {
-        icon: AiOutlineUser,
-        label: "Profile",
-        href: "/profile",
-        visible: ["admin", "user"],
-      },
+      // {
+      //   icon: AiOutlineUser,
+      //   label: "Profile",
+      //   href: "/profile",
+      //   visible: ["admin", "user"],
+      // },
       {
         icon: RiCodeView,
         label: "Developers",
