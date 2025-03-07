@@ -57,12 +57,12 @@ const menuItems = [
         href: "/dashboard/list/time-table",
         visible: ["admin", "user"],
       },
-      {
-        icon: MdOutlineAnnouncement,
-        label: "Announcements",
-        href: "/dashboard/list/announcements",
-        visible: ["admin", "user"],
-      },
+      // {
+      //   icon: MdOutlineAnnouncement,
+      //   label: "Announcements",
+      //   href: "/dashboard/list/announcements",
+      //   visible: ["admin", "user"],
+      // },
     ],
   },
   {
