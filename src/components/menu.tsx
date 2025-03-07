@@ -11,7 +11,6 @@ import {
   MdOutlineSchool,
   MdSubject,
   MdClass,
-  MdOutlineAnnouncement,
 } from "react-icons/md";
 import { BsTable } from "react-icons/bs";
 import { FaStream, FaSignOutAlt } from "react-icons/fa";
